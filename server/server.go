@@ -62,6 +62,9 @@ func New(store *channel.Store) (*Server, error) {
 	}, nil
 }
 
+// SessionID returns the server's own session ID.
+func (srv *Server) SessionID() pcp.GnuID { return srv.sessionID }
+
 // Serve accepts connections from ln and serves them until ctx is cancelled.
 // Returns nil when the context is done.
 func (srv *Server) Serve(ctx context.Context, ln net.Listener) error {
@@ -394,10 +397,10 @@ func (srv *Server) processBcst(sess *session, atom *pcp.Atom) {
 		case pcp.PCPBcstChanID:
 			routingChanID, _ = child.GetID()
 		case pcp.PCPChan:
-			info := parseChanAtom(child, routingChanID)
+			info := channel.ParseChanAtom(child, routingChanID)
 			chanInfo = &info
 		case pcp.PCPHost:
-			h := parseHostAtom(child, routingChanID, sess.remoteIP)
+			h := channel.ParseHostAtom(child, routingChanID, sess.remoteIP)
 			hit = &h
 		}
 	}
@@ -439,136 +442,6 @@ func parseHelo(a *pcp.Atom) (agent string, sid pcp.GnuID, port uint16, ver uint3
 	return
 }
 
-// parseChanAtom extracts channel.Info from a chan container atom.
-// defaultID is used as the channel ID if no id sub-atom is present.
-func parseChanAtom(a *pcp.Atom, defaultID pcp.GnuID) channel.Info {
-	info := channel.Info{ID: defaultID}
-	for _, child := range a.Children() {
-		switch child.Tag {
-		case pcp.PCPChanID:
-			if id, err := child.GetID(); err == nil {
-				info.ID = id
-			}
-		case pcp.PCPChanBCID:
-			info.BroadcastID, _ = child.GetID()
-		case pcp.PCPChanInfo:
-			parseInfoAtom(child, &info)
-		case pcp.PCPChanTrack:
-			parseTrackAtom(child, &info.Track)
-		}
-	}
-	return info
-}
-
-// parseInfoAtom populates Info fields from a chan > info container atom.
-func parseInfoAtom(a *pcp.Atom, info *channel.Info) {
-	for _, child := range a.Children() {
-		switch child.Tag {
-		case pcp.PCPChanInfoName:
-			info.Name = child.GetString()
-		case pcp.PCPChanInfoBitrate:
-			info.Bitrate, _ = child.GetInt()
-		case pcp.PCPChanInfoGenre:
-			info.Genre = child.GetString()
-		case pcp.PCPChanInfoURL:
-			info.URL = child.GetString()
-		case pcp.PCPChanInfoDesc:
-			info.Desc = child.GetString()
-		case pcp.PCPChanInfoComment:
-			info.Comment = child.GetString()
-		case pcp.PCPChanInfoType:
-			info.ContentType = child.GetString()
-		case pcp.PCPChanInfoStreamType:
-			info.MIMEType = child.GetString()
-		case pcp.PCPChanInfoStreamExt:
-			info.StreamExt = child.GetString()
-		}
-	}
-}
-
-// parseTrackAtom populates Track fields from a chan > trck container atom.
-func parseTrackAtom(a *pcp.Atom, t *channel.Track) {
-	for _, child := range a.Children() {
-		switch child.Tag {
-		case pcp.PCPChanTrackTitle:
-			t.Title = child.GetString()
-		case pcp.PCPChanTrackCreator:
-			t.Artist = child.GetString()
-		case pcp.PCPChanTrackURL:
-			t.Contact = child.GetString()
-		case pcp.PCPChanTrackAlbum:
-			t.Album = child.GetString()
-		}
-	}
-}
-
-// parseHostAtom extracts a channel.Hit from a host container atom.
-// fallbackIP is used as the global IP when no ip sub-atom is present
-// (e.g. the client's TCP remote address).
-func parseHostAtom(a *pcp.Atom, chanID pcp.GnuID, fallbackIP net.IP) channel.Hit {
-	hit := channel.Hit{ChanID: chanID}
-	var ips [2]net.IP
-	var ports [2]uint16
-	ipWriteIdx := 0 // next slot to fill from an ip atom
-	portWriteIdx := 0 // next slot to fill from a port atom (ip/port come in pairs)
-
-	for _, child := range a.Children() {
-		switch child.Tag {
-		case pcp.PCPHostID:
-			hit.SessionID, _ = child.GetID()
-		case pcp.PCPHostIP:
-			if ipWriteIdx < 2 {
-				ips[ipWriteIdx] = decodeIP(child.Data())
-				ipWriteIdx++
-			}
-		case pcp.PCPHostPort:
-			if portWriteIdx < 2 {
-				ports[portWriteIdx], _ = child.GetShort()
-				portWriteIdx++
-			}
-		case pcp.PCPHostNumListeners:
-			hit.NumListeners, _ = child.GetInt()
-		case pcp.PCPHostNumRelays:
-			hit.NumRelays, _ = child.GetInt()
-		case pcp.PCPHostUptime:
-			hit.UpTime, _ = child.GetInt()
-		case pcp.PCPHostVersion:
-			hit.Version, _ = child.GetInt()
-		case pcp.PCPHostVersionVP:
-			hit.VersionVP, _ = child.GetInt()
-		case pcp.PCPHostVersionExPrefix:
-			if d := child.Data(); len(d) >= 2 {
-				copy(hit.VersionExPfx[:], d[:2])
-			}
-		case pcp.PCPHostVersionExNumber:
-			hit.VersionExNum, _ = child.GetShort()
-		case pcp.PCPHostFlags1:
-			b, _ := child.GetByte()
-			hit.Tracker = b&pcp.PCPHostFlags1Tracker != 0
-			hit.Relay = b&pcp.PCPHostFlags1Relay != 0
-			hit.Direct = b&pcp.PCPHostFlags1Direct != 0
-			hit.Firewalled = b&pcp.PCPHostFlags1Push != 0
-			hit.Recv = b&pcp.PCPHostFlags1Recv != 0
-			hit.CIN = b&pcp.PCPHostFlags1CIN != 0
-		case pcp.PCPHostOldPos:
-			hit.OldPos, _ = child.GetInt()
-		case pcp.PCPHostNewPos:
-			hit.NewPos, _ = child.GetInt()
-		case pcp.PCPHostChanID:
-			if id, err := child.GetID(); err == nil {
-				hit.ChanID = id
-			}
-		}
-	}
-
-	if ips[0] == nil {
-		ips[0] = fallbackIP
-	}
-	hit.GlobalAddr = net.TCPAddr{IP: ips[0], Port: int(ports[0])}
-	hit.LocalAddr = net.TCPAddr{IP: ips[1], Port: int(ports[1])}
-	return hit
-}
-
 // ----------------------------------------------------------------------------
 // IP address helpers
 // ----------------------------------------------------------------------------
@@ -587,22 +460,4 @@ func encodeIP(ip net.IP) []byte {
 		b[15-i] = v
 	}
 	return b
-}
-
-// decodeIP converts PCP wire-format bytes back to a net.IP.
-// 4 bytes → IPv4.  16 bytes → IPv6 (reversed on the wire).
-func decodeIP(data []byte) net.IP {
-	switch len(data) {
-	case 4:
-		ip := make(net.IP, 4)
-		copy(ip, data)
-		return ip
-	case 16:
-		ip := make(net.IP, 16)
-		for i, b := range data {
-			ip[15-i] = b
-		}
-		return ip
-	}
-	return nil
 }
