@@ -1,0 +1,117 @@
+# httpd サーバ 要件・アーキテクチャ設計
+
+## 概要
+
+`peercast-root-shim`（PCPルートサーバ）を心臓部として、Web UIや
+PeerCastプレイヤー向け出力・アーカイブ閲覧を提供する多機能 httpd サーバを
+**同一バイナリ**として実装する。
+
+---
+
+## 機能要件
+
+### 機能1: Web ブラウザ用 YP情報一覧
+- 現在放送中のチャンネル一覧を表示する React SPA を提供する
+- フロントエンド: React（SPAとしてビルドしたものを Go バイナリに埋め込む）
+- データ取得: React → JSON API (`GET /api/channels`) → `channel.Store`
+
+### 機能2: PeerCastプレイヤー用チャンネルリスト
+- PeerCastプレイヤーが読み込む `index.txt` 形式のテキストを出力する
+- React は関与しない（プレイヤーが直接 HTTP で取得するテキストエンドポイント）
+- ソース: インメモリの `channel.Store`（リアルタイム）
+
+### 機能3: アーカイブ・統計
+- 過去の配信履歴・統計を閲覧できるページを React SPA として提供する
+- フロントエンド: 機能1と同一 SPA 内のページ
+- データ取得: React → JSON API (`GET /api/history` 等) → MySQL
+- 記録する情報:
+  - チャンネルごとの配信開始・終了時刻
+  - 最大同時視聴者数
+  - 配信時間の推移
+
+---
+
+## 非機能要件
+
+- **デプロイ**: 常に単一マシン上で動作する。スケールアウト不要
+- **プロセス**: PCPサーバ・HTTPサーバを同一バイナリ・同一プロセスで動かす
+- **永続化**: MySQL をアーカイブ・統計の永続化ストアとして使用する
+- **リアルタイム状態**: `channel.Store`（インメモリ）を単一の信頼できる情報源とする
+
+---
+
+## アーキテクチャ
+
+### 同一バイナリを選択した理由
+
+| 観点 | 判断 |
+|---|---|
+| 機能1・2はStoreの直接参照で実装できる | 別プロセス化するとStore公開手段が必要になり複雑化する |
+| MySQLが外部にある | 歴史データの共有はDBが解決する。gRPCは不要 |
+| 常に同一マシン | 分散の利点がない。gRPCのオーバーヘッドだけが残る |
+| 将来の分離 | 要件が変わったとき（別マシン化・独立デプロイ）に分離を検討する |
+
+### コンポーネント構成
+
+```
+main.go
+  ├── channel.Store          ← 共有インメモリ状態（PCPで更新、APIで参照）
+  ├── server.Server          ← PCPルートサーバ (port 7144)
+  │     └── channel.Store への AddHit / DelHit
+  ├── archive.Recorder       ← Store の変化を観察し MySQL に記録
+  └── httpd.Server           ← HTTPサーバ (port 未定)
+        ├── GET /api/channels → channel.Store 参照 → JSON（機能1用API）
+        ├── GET /api/history  → MySQL 参照 → JSON（機能3用API）
+        ├── GET /index.txt    → channel.Store 参照 → index.txt（機能2）
+        └── GET /*            → React SPA の静的ファイル（機能1・3 UI）
+```
+
+React SPA のビルド成果物は `//go:embed` でバイナリに埋め込み、単一バイナリで完結させる。
+
+### データフロー
+
+```
+PeerCastクライアント          Webブラウザ（React SPA）
+  │  PCP (TCP)                  │  HTTP
+  ▼                             ▼
+server.Server             httpd.Server
+  │ AddHit / DelHit         ├── GET /api/channels → channel.Store（リアルタイム）
+  ▼                         ├── GET /api/history  → MySQL（履歴）
+channel.Store               └── GET /index.txt    → channel.Store（機能2）
+  │
+  │ 変化通知（イベントまたはポーリング）
+  ▼
+archive.Recorder
+  │ INSERT / UPDATE
+  ▼
+MySQL
+```
+
+### archive.Recorder の実装方針（未決定）
+
+Store の変化を MySQL に記録する手段として以下の2案がある：
+
+**A. イベント通知方式**
+- `channel.Store` に `AddHit`/`DelHit` のフック（channel や callback）を追加
+- Recorder がイベントを受け取ってその都度 INSERT/UPDATE
+- リアルタイム性が高い。Store の実装変更が必要
+
+**B. ポーリング差分方式**
+- Recorder が一定間隔（例: 1s）で `Store.Snapshot()` を取得し、前回との差分を検出
+- Store の変更不要。実装がシンプル
+- 精度は polling 間隔に依存する
+
+---
+
+## 未決定事項
+
+| 項目 | 候補・備考 |
+|---|---|
+| HTTPサーバのポート番号 | 7145? 8080? |
+| `archive.Recorder` の実装方式 | イベント通知 vs ポーリング差分 |
+| MySQLのスキーマ設計 | チャンネル・配信セッション・視聴者数履歴テーブル |
+| React SPA のビルド・配置方法 | `go:embed` でバイナリ埋め込み（予定） |
+| フロントエンドのビルドツール | Vite? Create React App? |
+| CORS ポリシー | 開発時は React dev server (localhost:5173 等) からのリクエストを許可する必要あり |
+| JSON API の認証・認可 | 公開YPなら不要？管理画面があるなら要検討 |
+| `index.txt` フォーマットの詳細仕様 | PeerCastプレイヤーの読み込み仕様を確認 |
