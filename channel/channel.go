@@ -5,6 +5,7 @@ package channel
 
 import (
 	"net"
+	"sort"
 	"sync"
 	"time"
 
@@ -71,12 +72,23 @@ type HitList struct {
 	Info        Info
 	Hits        []Hit
 	LastHitTime time.Time
+	seq         uint64 // insertion sequence; lower = registered earlier
+}
+
+// ChannelState is an aggregate snapshot of one channel for archive.Recorder.
+type ChannelState struct {
+	Info      Info
+	Hits      []Hit
+	Listeners int    // sum of NumListeners across all Hits
+	Relays    int    // sum of NumRelays across all Hits
+	Seq       uint64 // insertion order (lower = earlier registered)
 }
 
 // Store is a thread-safe, in-memory registry of channel hit lists.
 type Store struct {
-	mu    sync.RWMutex
-	lists map[pcp.GnuID]*HitList
+	mu      sync.RWMutex
+	lists   map[pcp.GnuID]*HitList
+	nextSeq uint64 // monotonically increasing; incremented on first AddHit for a channel
 }
 
 // NewStore returns an empty, ready-to-use Store.
@@ -106,7 +118,8 @@ func (s *Store) AddHit(info Info, hit Hit) {
 
 	hl, ok := s.lists[info.ID]
 	if !ok {
-		hl = &HitList{}
+		hl = &HitList{seq: s.nextSeq}
+		s.nextSeq++
 		s.lists[info.ID] = hl
 	}
 
@@ -183,6 +196,33 @@ func (s *Store) RemoveDeadHits(timeout time.Duration) {
 			delete(s.lists, id)
 		}
 	}
+}
+
+// SnapshotOrdered returns all current channels as ChannelState, ordered by
+// registration sequence (the order channels were first added via AddHit).
+func (s *Store) SnapshotOrdered() []ChannelState {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	out := make([]ChannelState, 0, len(s.lists))
+	for _, hl := range s.lists {
+		var listeners, relays int
+		for _, h := range hl.Hits {
+			listeners += int(h.NumListeners)
+			relays += int(h.NumRelays)
+		}
+		hits := make([]Hit, len(hl.Hits))
+		copy(hits, hl.Hits)
+		out = append(out, ChannelState{
+			Info:      hl.Info,
+			Hits:      hits,
+			Listeners: listeners,
+			Relays:    relays,
+			Seq:       hl.seq,
+		})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Seq < out[j].Seq })
+	return out
 }
 
 // Snapshot returns a deep copy of all current hit lists, suitable for

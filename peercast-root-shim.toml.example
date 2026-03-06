@@ -1,0 +1,9 @@
+[pcp]
+addr = ":7144"
+
+[http]
+addr = ":80"
+cors_origins = ["http://localhost:5173"]
+
+[database]
+dsn = "root:password@tcp(localhost:3306)/peercast?parseTime=true&loc=Local"
