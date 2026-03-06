@@ -2,7 +2,7 @@
 
 ## 概要
 
-`peercast-root-shim`（PCPルートサーバ）を心臓部として、Web UIや
+`peercast-0yp`（PCPルートサーバ）を心臓部として、Web UIや
 PeerCastプレイヤー向け出力・アーカイブ閲覧を提供する多機能 httpd サーバを
 **同一バイナリ**として実装する。
 

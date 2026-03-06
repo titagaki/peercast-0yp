@@ -8,7 +8,7 @@ import (
 
 	pcp "github.com/titagaki/peercast-pcp/pcp"
 
-	"github.com/megan/peercast-root-shim/channel"
+	"github.com/megan/peercast-0yp/channel"
 )
 
 func makeGnuID(b byte) pcp.GnuID {

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`peercast-root-shim` is a Go implementation of a PeerCast root server (tracker). It speaks the PCP (PeerCast Protocol) binary protocol to act as the root/tracker node in a PeerCast P2P streaming network.
+`peercast-0yp` is a Go implementation of a PeerCast root server (tracker). It speaks the PCP (PeerCast Protocol) binary protocol to act as the root/tracker node in a PeerCast P2P streaming network.
 
 The repository is in early development — currently only the protocol spec and a C++ reference implementation exist. No Go code has been written yet.
 

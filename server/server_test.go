@@ -8,8 +8,8 @@ import (
 
 	pcp "github.com/titagaki/peercast-pcp/pcp"
 
-	"github.com/megan/peercast-root-shim/channel"
-	"github.com/megan/peercast-root-shim/server"
+	"github.com/megan/peercast-0yp/channel"
+	"github.com/megan/peercast-0yp/server"
 )
 
 // startServer creates a Server, binds a random local port, starts serving,

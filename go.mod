@@ -1,4 +1,4 @@
-module github.com/megan/peercast-root-shim
+module github.com/megan/peercast-0yp
 
 go 1.25.0
 

@@ -13,15 +13,15 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/megan/peercast-root-shim/archive"
-	"github.com/megan/peercast-root-shim/channel"
-	"github.com/megan/peercast-root-shim/config"
-	"github.com/megan/peercast-root-shim/httpd"
-	"github.com/megan/peercast-root-shim/server"
+	"github.com/megan/peercast-0yp/archive"
+	"github.com/megan/peercast-0yp/channel"
+	"github.com/megan/peercast-0yp/config"
+	"github.com/megan/peercast-0yp/httpd"
+	"github.com/megan/peercast-0yp/server"
 )
 
 func main() {
-	configPath := flag.String("config", "./peercast-root-shim.toml", "path to config file")
+	configPath := flag.String("config", "./peercast-0yp.toml", "path to config file")
 	flag.Parse()
 
 	cfg, err := config.Load(*configPath)

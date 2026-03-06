@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/megan/peercast-root-shim/channel"
+	"github.com/megan/peercast-0yp/channel"
 )
 
 // Handler serves HTTP API endpoints backed by the channel store.
