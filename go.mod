@@ -1,4 +1,4 @@
-module github.com/megan/peercast-0yp
+module github.com/titagaki/peercast-0yp
 
 go 1.25.0
 

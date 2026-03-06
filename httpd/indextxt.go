@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/megan/peercast-0yp/channel"
+	"github.com/titagaki/peercast-0yp/channel"
 )
 
 func (s *Server) handleIndexTxt(w http.ResponseWriter, r *http.Request) {

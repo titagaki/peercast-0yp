@@ -13,11 +13,11 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/megan/peercast-0yp/archive"
-	"github.com/megan/peercast-0yp/channel"
-	"github.com/megan/peercast-0yp/config"
-	"github.com/megan/peercast-0yp/httpd"
-	"github.com/megan/peercast-0yp/server"
+	"github.com/titagaki/peercast-0yp/archive"
+	"github.com/titagaki/peercast-0yp/channel"
+	"github.com/titagaki/peercast-0yp/config"
+	"github.com/titagaki/peercast-0yp/httpd"
+	"github.com/titagaki/peercast-0yp/server"
 )
 
 func main() {

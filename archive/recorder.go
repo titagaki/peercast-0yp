@@ -10,7 +10,7 @@ import (
 
 	pcp "github.com/titagaki/peercast-pcp/pcp"
 
-	"github.com/megan/peercast-0yp/channel"
+	"github.com/titagaki/peercast-0yp/channel"
 )
 
 // Recorder polls channel.Store and writes sessions/snapshots to MySQL.

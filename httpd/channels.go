@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/megan/peercast-0yp/channel"
+	"github.com/titagaki/peercast-0yp/channel"
 )
 
 type channelJSON struct {
