@@ -72,6 +72,24 @@ PeerCastプレイヤー向け出力・アーカイブ閲覧を提供する多機
 | 常に同一マシン | 分散の利点がない。gRPCのオーバーヘッドだけが残る |
 | 将来の分離 | 要件が変わったとき（別マシン化・独立デプロイ）に分離を検討する |
 
+### `channel.Store` の追加API
+
+`archive.Recorder` のポーリングに必要な `Snapshot()` を追加する。
+
+```go
+// ChannelState はRecorder向けに集約したチャンネルの状態スナップショット。
+type ChannelState struct {
+    Info      Info
+    Track     Track
+    Hits      []Hit
+    Listeners int  // 全Hitのリスナー数合計
+    Relays     int  // 全Hitのリレー数合計
+}
+
+// Snapshot は現在Storeに存在する全チャンネルの状態を返す。
+func (s *Store) Snapshot() []ChannelState
+```
+
 ### コンポーネント構成
 
 ```
@@ -108,40 +126,46 @@ archive.Recorder
 MySQL
 ```
 
-### archive.Recorder の実装方針（未決定）
+### archive.Recorder の実装方針
 
-Store の変化を MySQL に記録する手段として以下の2案がある：
+**B. ポーリング差分方式を採用する。**
 
-**A. イベント通知方式**
-- `channel.Store` に `AddHit`/`DelHit` のフック（channel や callback）を追加
-- Recorder がイベントを受け取ってその都度 INSERT/UPDATE
-- リアルタイム性が高い。Store の実装変更が必要
+- Recorder が一定間隔（1s）で `Store.Snapshot()` を取得し、前回との差分を検出
+- Store への変更不要（疎結合）
+- スナップショットは1分間隔のため、1s polling でセッション開始・終了の検出精度は十分
 
-**B. ポーリング差分方式**
-- Recorder が一定間隔（例: 1s）で `Store.Snapshot()` を取得し、前回との差分を検出
-- Store の変更不要。実装がシンプル
-- 精度は polling 間隔に依存する
+（却下）A. イベント通知方式: Store に `AddHit`/`DelHit` フックを追加する案。精度のメリットが小さい割に Store の変更コストがあるため不採用。
+
+**起動時処理**: Recorder 起動時に `ended_at = NULL` のレコードを `NOW()` で埋める。
+クラッシュ・再起動由来の未クローズセッションを正常に終了扱いにするため。
+同じ `channel_id` で再配信が始まった場合は新規レコードが INSERT されるため問題なし。
 
 ---
 
-## 未決定事項
+## 決定事項まとめ
 
-| 項目 | 候補・備考 |
+| 項目 | 決定内容 |
 |---|---|
 | HTTPサーバのポート番号 | **80** |
-| `archive.Recorder` の実装方式 | イベント通知 vs ポーリング差分 |
-| MySQLのスキーマ設計 | `channel_sessions` / `channel_snapshots` |
-| React SPA のビルド・配置方法 | `go:embed` でバイナリ埋め込み（予定） |
-| フロントエンドのビルドツール | Vite? Create React App? |
-| CORS ポリシー | 開発時は React dev server (localhost:5173 等) からのリクエストを許可する必要あり |
-| JSON API の認証・認可 | 公開YPなら不要？管理画面があるなら要検討 |
-| `index.txt` フォーマットの詳細仕様 | 下記「index.txt フォーマット仕様」参照（確定） |
+| `archive.Recorder` の実装方式 | **ポーリング差分**（1s間隔、Store変更なし） |
+| MySQLのスキーマ設計 | `design/schema.md` 参照 |
+| React SPA のビルド・配置方法 | `go:embed` でバイナリ埋め込み |
+| HTTPフレームワーク | **chi**（`net/http` 互換、軽量、パスパラメータ対応） |
+| MySQL接続設定 | **設定ファイル**。デプロイ方法は開発環境（Docker）が動いてから検討 |
+| フロントエンドのビルドツール | **Vite**（Create React App は事実上メンテナンス停止） |
+| CORS ポリシー | 本番: same-origin のため不要。開発時: `CORS_ALLOW_ORIGINS` env var で `localhost:5173` 等を許可 |
+| JSON API の認証・認可 | **不要**（公開YPの読み取りAPIのため。管理機能追加時に再検討） |
+| `index.txt` フォーマットの詳細仕様 | 下記「index.txt フォーマット仕様」参照 |
 
 ---
 
 ## index.txt フォーマット仕様
 
 出典: `_ref/peercast-yayp/docs/api.md`
+
+### ソート順
+
+`channel.Store` への登録順（`AddHit` された順）。
 
 ### Content-Type
 
@@ -175,8 +199,8 @@ Store の変化を MySQL に記録する手段として以下の2案がある：
 | 16 | 配信時間 | `H:MM` 形式 |
 | 17 | click | （用途不明、互換性のため出力） |
 | 18 | コメント | |
-| 19 | 直接接続可否 | `0` or `1` |
+| 19 | 直接接続可否 | `0` or `1`。HitList 内のいずれかの Hit に `PCPHostFlags1Direct` が立っていれば `1` |
 
 ### 末尾のお知らせ行
 
-チャンネルレコードの末尾に、お知らせ情報を同形式で追加できる（peercast-yayp では `information` テーブルから取得）。本実装での要否は未決定。
+チャンネルレコードの末尾に、お知らせ情報を同形式で追加できる（peercast-yayp では `information` テーブルから取得）。**初期実装では未実装とし、将来対応予定。**
