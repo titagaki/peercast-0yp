@@ -3,3 +3,5 @@
 
 # Build output
 /peercast-0yp
+/web/dist
+/web/node_modules

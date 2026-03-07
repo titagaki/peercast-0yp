@@ -3,7 +3,6 @@ package httpd
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	"net/http"
 
@@ -14,9 +13,6 @@ import (
 	"github.com/titagaki/peercast-0yp/internal/channel"
 	"github.com/titagaki/peercast-0yp/internal/repository"
 )
-
-//go:embed static
-var staticFiles embed.FS
 
 // Server is the HTTP server for the PeerCast YP.
 type Server struct {
@@ -56,11 +52,10 @@ func (s *Server) buildRouter(corsOrigins []string) chi.Router {
 	}
 
 	r.Get("/api/channels", s.handleAPIChannels)
-	r.Get("/api/channels/{id}/activity", s.handleAPIActivity)
-	r.Get("/api/channels/{id}/timeline", s.handleAPITimeline)
+	r.Get("/api/channels/activity", s.handleAPIActivity)
+	r.Get("/api/channels/timeline", s.handleAPITimeline)
 	r.Get("/api/history", s.handleAPIHistory)
 	r.Get("/index.txt", s.handleIndexTxt)
-	r.Get("/*", s.handleSPA)
 
 	return r
 }

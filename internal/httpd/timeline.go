@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
-
-	"github.com/go-chi/chi/v5"
 )
 
 type timelineRowJSON struct {
@@ -23,9 +21,9 @@ type timelineRowJSON struct {
 }
 
 func (s *Server) handleAPITimeline(w http.ResponseWriter, r *http.Request) {
-	chanID, err := parseChannelID(chi.URLParam(r, "id"))
-	if err != nil {
-		http.Error(w, "invalid channel id", http.StatusBadRequest)
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		http.Error(w, "name parameter required", http.StatusBadRequest)
 		return
 	}
 
@@ -42,7 +40,7 @@ func (s *Server) handleAPITimeline(w http.ResponseWriter, r *http.Request) {
 	dayStart := date
 	dayEnd := date.AddDate(0, 0, 1)
 
-	rows, err := s.snapshots.ListByChannelAndDate(r.Context(), chanID, dayStart, dayEnd)
+	rows, err := s.snapshots.ListByNameAndDate(r.Context(), name, dayStart, dayEnd)
 	if err != nil {
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return

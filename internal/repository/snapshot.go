@@ -66,25 +66,26 @@ func (r *SnapshotRepo) Insert(ctx context.Context, sessionID int64, s channel.Ch
 	return err
 }
 
-// ListByChannelAndDate returns snapshot rows for the given channel and date range,
+// ListByNameAndDate returns snapshot rows for the given channel name and date range,
 // with Changed set to true when any metadata field differs from the previous snapshot.
-func (r *SnapshotRepo) ListByChannelAndDate(ctx context.Context, chanID []byte, dayStart, dayEnd time.Time) ([]SnapshotRow, error) {
+func (r *SnapshotRepo) ListByNameAndDate(ctx context.Context, name string, dayStart, dayEnd time.Time) ([]SnapshotRow, error) {
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT
-			recorded_at, listeners, relays,
-			name, genre, description, url, comment, track_title, track_artist,
-			LAG(name)         OVER w AS prev_name,
-			LAG(genre)        OVER w AS prev_genre,
-			LAG(description)  OVER w AS prev_description,
-			LAG(url)          OVER w AS prev_url,
-			LAG(comment)      OVER w AS prev_comment,
-			LAG(track_title)  OVER w AS prev_track_title,
-			LAG(track_artist) OVER w AS prev_track_artist
-		FROM channel_snapshots
-		WHERE channel_id = ? AND recorded_at >= ? AND recorded_at < ?
-		WINDOW w AS (PARTITION BY session_id ORDER BY recorded_at)
-		ORDER BY recorded_at`,
-		chanID, dayStart, dayEnd,
+			ch.recorded_at, ch.listeners, ch.relays,
+			ch.name, ch.genre, ch.description, ch.url, ch.comment, ch.track_title, ch.track_artist,
+			LAG(ch.name)         OVER w AS prev_name,
+			LAG(ch.genre)        OVER w AS prev_genre,
+			LAG(ch.description)  OVER w AS prev_description,
+			LAG(ch.url)          OVER w AS prev_url,
+			LAG(ch.comment)      OVER w AS prev_comment,
+			LAG(ch.track_title)  OVER w AS prev_track_title,
+			LAG(ch.track_artist) OVER w AS prev_track_artist
+		FROM channel_snapshots ch
+		JOIN channel_sessions cs ON ch.session_id = cs.id
+		WHERE cs.channel_name = ? AND ch.recorded_at >= ? AND ch.recorded_at < ?
+		WINDOW w AS (PARTITION BY ch.session_id ORDER BY ch.recorded_at)
+		ORDER BY ch.recorded_at`,
+		name, dayStart, dayEnd,
 	)
 	if err != nil {
 		return nil, err
@@ -129,6 +130,89 @@ func (r *SnapshotRepo) ListByChannelAndDate(ctx context.Context, chanID []byte, 
 			row.Comment = comment
 			row.TrackTitle = trackTitle
 			row.TrackArtist = trackArtist
+		}
+		result = append(result, row)
+	}
+	return result, rows.Err()
+}
+
+// PageSnapshotRow is a SnapshotRow augmented with the session start time,
+// used to compute elapsed broadcast duration for the getgmt page.
+type PageSnapshotRow struct {
+	SessionStartedAt time.Time
+	SnapshotRow
+}
+
+// ListByNameAndDateForPage is like ListByNameAndDate but also includes
+// the session started_at, needed to compute broadcast duration.
+func (r *SnapshotRepo) ListByNameAndDateForPage(ctx context.Context, name string, dayStart, dayEnd time.Time) ([]PageSnapshotRow, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT
+			cs.started_at,
+			ch.recorded_at, ch.listeners, ch.relays,
+			ch.name, ch.genre, ch.description, ch.url, ch.comment, ch.track_title, ch.track_artist,
+			LAG(ch.name)         OVER w AS prev_name,
+			LAG(ch.genre)        OVER w AS prev_genre,
+			LAG(ch.description)  OVER w AS prev_description,
+			LAG(ch.url)          OVER w AS prev_url,
+			LAG(ch.comment)      OVER w AS prev_comment,
+			LAG(ch.track_title)  OVER w AS prev_track_title,
+			LAG(ch.track_artist) OVER w AS prev_track_artist
+		FROM channel_snapshots ch
+		JOIN channel_sessions cs ON ch.session_id = cs.id
+		WHERE cs.channel_name = ? AND ch.recorded_at >= ? AND ch.recorded_at < ?
+		WINDOW w AS (PARTITION BY ch.session_id ORDER BY ch.recorded_at)
+		ORDER BY ch.recorded_at`,
+		name, dayStart, dayEnd,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []PageSnapshotRow
+	for rows.Next() {
+		var sessionStartedAt time.Time
+		var recordedAt time.Time
+		var listeners, relays int
+		var name, genre, desc, url, comment, trackTitle, trackArtist string
+		var prevName, prevGenre, prevDesc, prevURL, prevComment, prevTrackTitle, prevTrackArtist sql.NullString
+
+		if err := rows.Scan(
+			&sessionStartedAt,
+			&recordedAt, &listeners, &relays,
+			&name, &genre, &desc, &url, &comment, &trackTitle, &trackArtist,
+			&prevName, &prevGenre, &prevDesc, &prevURL, &prevComment, &prevTrackTitle, &prevTrackArtist,
+		); err != nil {
+			return nil, err
+		}
+
+		changed := !prevName.Valid ||
+			name != prevName.String ||
+			genre != prevGenre.String ||
+			desc != prevDesc.String ||
+			url != prevURL.String ||
+			comment != prevComment.String ||
+			trackTitle != prevTrackTitle.String ||
+			trackArtist != prevTrackArtist.String
+
+		row := PageSnapshotRow{
+			SessionStartedAt: sessionStartedAt,
+			SnapshotRow: SnapshotRow{
+				RecordedAt: recordedAt,
+				Listeners:  listeners,
+				Relays:     relays,
+				Changed:    changed,
+			},
+		}
+		if changed {
+			row.SnapshotRow.Name = name
+			row.SnapshotRow.Genre = genre
+			row.SnapshotRow.Description = desc
+			row.SnapshotRow.URL = url
+			row.SnapshotRow.Comment = comment
+			row.SnapshotRow.TrackTitle = trackTitle
+			row.SnapshotRow.TrackArtist = trackArtist
 		}
 		result = append(result, row)
 	}

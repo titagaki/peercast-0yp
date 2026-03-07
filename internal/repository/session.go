@@ -74,13 +74,15 @@ func (r *SessionRepo) Close(ctx context.Context, id int64, now time.Time) error 
 	return err
 }
 
-// List returns up to limit sessions starting from offset, ordered by started_at DESC.
+// List returns sessions from the past 7 days, up to limit rows starting from offset,
+// ordered by started_at DESC.
 func (r *SessionRepo) List(ctx context.Context, limit, offset int) ([]Session, error) {
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT id, channel_id, channel_name, bitrate, content_type, genre, url,
 		       started_at, ended_at,
 		       TIMESTAMPDIFF(MINUTE, started_at, IFNULL(ended_at, NOW())) AS duration_min
 		FROM channel_sessions
+		WHERE started_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
 		ORDER BY started_at DESC
 		LIMIT ? OFFSET ?`, limit, offset)
 	if err != nil {
@@ -108,15 +110,15 @@ func (r *SessionRepo) List(ctx context.Context, limit, offset int) ([]Session, e
 	return sessions, rows.Err()
 }
 
-// ListIntervalsByChannel returns [start, end) pairs for all sessions of the
-// given channel in the past 365 days, ordered by started_at.
-func (r *SessionRepo) ListIntervalsByChannel(ctx context.Context, chanID []byte) ([]SessionInterval, error) {
+// ListIntervalsByName returns [start, end) pairs for all sessions of the
+// given channel name in the past 365 days, ordered by started_at.
+func (r *SessionRepo) ListIntervalsByName(ctx context.Context, name string) ([]SessionInterval, error) {
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT started_at, IFNULL(ended_at, NOW())
 		FROM channel_sessions
-		WHERE channel_id = ?
+		WHERE channel_name = ?
 		  AND started_at >= DATE_SUB(NOW(), INTERVAL 365 DAY)
-		ORDER BY started_at`, chanID)
+		ORDER BY started_at`, name)
 	if err != nil {
 		return nil, err
 	}

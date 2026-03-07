@@ -1,13 +1,10 @@
 package httpd
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"sort"
 	"time"
-
-	"github.com/go-chi/chi/v5"
 )
 
 type activityJSON struct {
@@ -16,13 +13,13 @@ type activityJSON struct {
 }
 
 func (s *Server) handleAPIActivity(w http.ResponseWriter, r *http.Request) {
-	chanID, err := parseChannelID(chi.URLParam(r, "id"))
-	if err != nil {
-		http.Error(w, "invalid channel id", http.StatusBadRequest)
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		http.Error(w, "name parameter required", http.StatusBadRequest)
 		return
 	}
 
-	intervals, err := s.sessions.ListIntervalsByChannel(r.Context(), chanID)
+	intervals, err := s.sessions.ListIntervalsByName(r.Context(), name)
 	if err != nil {
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return
@@ -53,9 +50,4 @@ func splitAcrossDays(start, end time.Time, acc map[string]int) {
 		acc[cur.Format("2006-01-02")] += int(dayEnd.Sub(cur).Minutes())
 		cur = dayEnd
 	}
-}
-
-// parseChannelID parses a 32-character hex GnuID string into a []byte.
-func parseChannelID(s string) ([]byte, error) {
-	return hex.DecodeString(s)
 }

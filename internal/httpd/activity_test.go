@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+
 func TestSplitAcrossDays_SingleDay(t *testing.T) {
 	loc := time.UTC
 	start := time.Date(2024, 1, 15, 10, 0, 0, 0, loc)
@@ -90,30 +91,3 @@ func TestSplitAcrossDays_Accumulates(t *testing.T) {
 	}
 }
 
-func TestParseChannelID_Valid(t *testing.T) {
-	// 32-character hex string = 16 bytes
-	id, err := parseChannelID("0102030405060708090a0b0c0d0e0f10")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(id) != 16 {
-		t.Errorf("len = %d, want 16", len(id))
-	}
-	if id[0] != 0x01 || id[15] != 0x10 {
-		t.Errorf("decoded bytes incorrect: %x", id)
-	}
-}
-
-func TestParseChannelID_Invalid(t *testing.T) {
-	// parseChannelID is hex.DecodeString — only invalid hex chars cause errors.
-	cases := []string{
-		"notHex",
-		"gg" + "00000000000000000000000000000000",
-		"zz",
-	}
-	for _, tc := range cases {
-		if _, err := parseChannelID(tc); err == nil {
-			t.Errorf("parseChannelID(%q): expected error, got nil", tc)
-		}
-	}
-}
