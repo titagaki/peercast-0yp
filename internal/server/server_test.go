@@ -8,8 +8,8 @@ import (
 
 	pcp "github.com/titagaki/peercast-pcp/pcp"
 
-	"github.com/titagaki/peercast-0yp/channel"
-	"github.com/titagaki/peercast-0yp/server"
+	"github.com/titagaki/peercast-0yp/internal/channel"
+	"github.com/titagaki/peercast-0yp/internal/server"
 )
 
 // startServer creates a Server, binds a random local port, starts serving,
@@ -17,7 +17,7 @@ import (
 func startServer(t *testing.T) (*server.Server, *channel.Store, net.Listener) {
 	t.Helper()
 	store := channel.NewStore()
-	srv, err := server.New(store)
+	srv, err := server.New(store, server.DefaultConfig())
 	if err != nil {
 		t.Fatalf("server.New: %v", err)
 	}

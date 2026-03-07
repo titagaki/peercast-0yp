@@ -1,5 +1,4 @@
-// Package api provides the HTTP API for the PeerCast root server.
-package api
+package httpd
 
 import (
 	"encoding/json"
@@ -7,26 +6,9 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/titagaki/peercast-0yp/channel"
+	"github.com/titagaki/peercast-0yp/internal/channel"
 )
 
-// Handler serves HTTP API endpoints backed by the channel store.
-type Handler struct {
-	store *channel.Store
-}
-
-// NewHandler creates a Handler backed by store.
-func NewHandler(store *channel.Store) *Handler {
-	return &Handler{store: store}
-}
-
-// Register attaches the API routes to mux.
-func (h *Handler) Register(mux *http.ServeMux) {
-	mux.HandleFunc("GET /api/channels", h.handleJSONChannels)
-	mux.HandleFunc("GET /channels.txt", h.handleTextChannels)
-}
-
-// channelJSON is the JSON representation of a single channel.
 type channelJSON struct {
 	ID           string    `json:"id"`
 	Name         string    `json:"name"`
@@ -74,7 +56,6 @@ func buildChannelJSON(hl channel.HitList) channelJSON {
 			Contact: info.Track.Contact,
 		},
 	}
-
 	for _, hit := range hl.Hits {
 		if hit.Tracker {
 			ip := ""
@@ -92,53 +73,18 @@ func buildChannelJSON(hl channel.HitList) channelJSON {
 			break
 		}
 	}
-
 	return out
 }
 
-func (h *Handler) handleJSONChannels(w http.ResponseWriter, r *http.Request) {
-	snap := h.store.Snapshot()
+func (s *Server) handleAPIChannels(w http.ResponseWriter, r *http.Request) {
+	snap := s.store.Snapshot()
 
 	entries := make([]channelJSON, 0, len(snap))
 	for _, hl := range snap {
 		entries = append(entries, buildChannelJSON(hl))
 	}
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].Name < entries[j].Name
-	})
+	sort.Slice(entries, func(i, j int) bool { return entries[i].Name < entries[j].Name })
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(entries)
-}
-
-func (h *Handler) handleTextChannels(w http.ResponseWriter, r *http.Request) {
-	snap := h.store.Snapshot()
-
-	entries := make([]channelJSON, 0, len(snap))
-	for _, hl := range snap {
-		entries = append(entries, buildChannelJSON(hl))
-	}
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].Name < entries[j].Name
-	})
-
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	for _, entry := range entries {
-		addr := ""
-		if entry.Tracker.IP != "" {
-			addr = fmt.Sprintf("%s:%d", entry.Tracker.IP, entry.Tracker.Port)
-		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n",
-			entry.Name,
-			entry.ID,
-			addr,
-			entry.Genre,
-			entry.Desc,
-			entry.NumListeners,
-			entry.NumRelays,
-			entry.Bitrate,
-			entry.ContentType,
-			entry.Comment,
-		)
-	}
 }

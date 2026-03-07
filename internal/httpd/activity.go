@@ -1,8 +1,8 @@
 package httpd
 
 import (
-	"encoding/json"
 	"encoding/hex"
+	"encoding/json"
 	"net/http"
 	"sort"
 	"time"
@@ -22,32 +22,15 @@ func (s *Server) handleAPIActivity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := s.db.QueryContext(r.Context(), `
-		SELECT started_at, IFNULL(ended_at, NOW())
-		FROM channel_sessions
-		WHERE channel_id = ?
-		  AND started_at >= DATE_SUB(NOW(), INTERVAL 365 DAY)
-		ORDER BY started_at`,
-		chanID,
-	)
+	intervals, err := s.sessions.ListIntervalsByChannel(r.Context(), chanID)
 	if err != nil {
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
 
 	acc := make(map[string]int)
-	for rows.Next() {
-		var start, end time.Time
-		if err := rows.Scan(&start, &end); err != nil {
-			http.Error(w, "scan error", http.StatusInternalServerError)
-			return
-		}
-		splitAcrossDays(start, end, acc)
-	}
-	if err := rows.Err(); err != nil {
-		http.Error(w, "rows error", http.StatusInternalServerError)
-		return
+	for _, iv := range intervals {
+		splitAcrossDays(iv.Start, iv.End, acc)
 	}
 
 	result := make([]activityJSON, 0, len(acc))

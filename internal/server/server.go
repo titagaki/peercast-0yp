@@ -14,25 +14,38 @@ import (
 
 	pcp "github.com/titagaki/peercast-pcp/pcp"
 
-	"github.com/titagaki/peercast-0yp/channel"
+	"github.com/titagaki/peercast-0yp/internal/channel"
 )
 
-// Protocol constants mirroring the reference implementation defaults.
+// Protocol-level constants that are part of the PCP implementation and
+// are not operator-configurable.
 const (
-	agentString      = "PeerCastRoot/0.1 (Go)"
-	serverVersion    = uint32(1218)
-	serverVersionVP  = uint32(27)
-	minClientVersion = uint32(1200)
-
-	updateInterval    = 120 * time.Second
-	hitTimeout        = 180 * time.Second // dead-hit removal threshold
-	readTimeout       = updateInterval + 60*time.Second
-	maxCINConnections = 100
+	agentString     = "PeerCastRoot/0.1 (Go)"
+	serverVersion   = uint32(1218)
+	serverVersionVP = uint32(27)
 )
 
 var versionExPrefix = [2]byte{'Y', 'P'}
 
 const versionExNumber = uint16(1)
+
+// Config holds operator-configurable server parameters.
+type Config struct {
+	MaxConnections   int           // maximum simultaneous CIN connections (default 100)
+	UpdateInterval   time.Duration // how often to request tracker updates (default 120s)
+	HitTimeout       time.Duration // dead-hit removal threshold (default 180s)
+	MinClientVersion uint32        // minimum accepted client version (default 1200)
+}
+
+// DefaultConfig returns a Config with sensible defaults.
+func DefaultConfig() Config {
+	return Config{
+		MaxConnections:   100,
+		UpdateInterval:   120 * time.Second,
+		HitTimeout:       180 * time.Second,
+		MinClientVersion: 1200,
+	}
+}
 
 // ----------------------------------------------------------------------------
 // Server
@@ -42,6 +55,7 @@ const versionExNumber = uint16(1)
 // handles the PCP handshake, dispatches incoming bcst atoms to the channel
 // store, and periodically broadcasts root settings to all connected clients.
 type Server struct {
+	cfg       Config
 	sessionID pcp.GnuID
 	store     *channel.Store
 
@@ -50,12 +64,13 @@ type Server struct {
 }
 
 // New creates a Server with a random session ID.
-func New(store *channel.Store) (*Server, error) {
+func New(store *channel.Store, cfg Config) (*Server, error) {
 	var id pcp.GnuID
 	if _, err := rand.Read(id[:]); err != nil {
 		return nil, err
 	}
 	return &Server{
+		cfg:       cfg,
 		sessionID: id,
 		store:     store,
 		sessions:  make(map[pcp.GnuID]*session),
@@ -105,8 +120,6 @@ func (srv *Server) ListenAndServe(ctx context.Context, addr string) error {
 }
 
 // closeAllSessions closes all active session connections.
-// It collects connections under the lock, then closes them outside the lock
-// to avoid deadlocking with the handleConn defer that also acquires the lock.
 func (srv *Server) closeAllSessions() {
 	srv.mu.Lock()
 	conns := make([]net.Conn, 0, len(srv.sessions))
@@ -116,12 +129,11 @@ func (srv *Server) closeAllSessions() {
 	srv.mu.Unlock()
 
 	for _, c := range conns {
-		c.Close() // double-close is harmless
+		c.Close()
 	}
 }
 
-// cleanupLoop removes dead hits from the channel store every 500 ms,
-// replicating C++ ChanMgr::clearDeadHits called from idleProc.
+// cleanupLoop removes dead hits from the channel store every 500 ms.
 func (srv *Server) cleanupLoop(ctx context.Context) {
 	t := time.NewTicker(500 * time.Millisecond)
 	defer t.Stop()
@@ -130,16 +142,15 @@ func (srv *Server) cleanupLoop(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-t.C:
-			srv.store.RemoveDeadHits(hitTimeout)
+			srv.store.RemoveDeadHits(srv.cfg.HitTimeout)
 		}
 	}
 }
 
 // broadcastLoop sends a bcst > root > upd packet to every connected CIN
-// session every updateInterval seconds, replicating C++
-// ServMgr::broadcastRootSettings called from idleProc.
+// session every UpdateInterval seconds.
 func (srv *Server) broadcastLoop(ctx context.Context) {
-	t := time.NewTicker(updateInterval)
+	t := time.NewTicker(srv.cfg.UpdateInterval)
 	defer t.Stop()
 	for {
 		select {
@@ -155,20 +166,14 @@ func (srv *Server) broadcastLoop(ctx context.Context) {
 // Per-connection session
 // ----------------------------------------------------------------------------
 
-// session holds the state for a single connected CIN client.
 type session struct {
 	conn     net.Conn
 	remoteIP net.IP
 	clientID pcp.GnuID
-
-	// sendCh is a buffered channel used to pass atoms to the send goroutine.
-	// If the buffer is full the packet is dropped (client is too slow).
-	sendCh chan *pcp.Atom
-	done   chan struct{} // closed when the session ends
+	sendCh   chan *pcp.Atom
+	done     chan struct{}
 }
 
-// sendLoop drains sendCh and writes each atom to the connection. It exits
-// when done is closed or a write error occurs.
 func (s *session) sendLoop() {
 	for {
 		select {
@@ -186,12 +191,12 @@ func (s *session) sendLoop() {
 // Connection handling
 // ----------------------------------------------------------------------------
 
-// handleConn manages the full lifecycle of a single CIN connection:
-// PCP version exchange → HELO/OLEH handshake → validation → main read loop.
 func (srv *Server) handleConn(ctx context.Context, conn net.Conn) {
 	defer conn.Close()
 	remoteAddr := conn.RemoteAddr().(*net.TCPAddr)
 	remoteIP := remoteAddr.IP
+
+	readTimeout := srv.cfg.UpdateInterval + 60*time.Second
 
 	// ── Step 1: Read "pcp\n" version atom ────────────────────────────────
 	vAtom, err := pcp.ReadAtom(conn)
@@ -215,13 +220,13 @@ func (srv *Server) handleConn(ctx context.Context, conn net.Conn) {
 	clientAgent, clientSID, clientPort, clientVer := parseHelo(heloAtom)
 	slog.Info("HELO", "addr", remoteAddr, "agent", clientAgent, "ver", clientVer)
 
-	// ── Step 3: Send OLEH (always, even if we will reject next) ──────────
+	// ── Step 3: Send OLEH ────────────────────────────────────────────────
 	if err := writeOleh(conn, srv.sessionID, remoteIP, clientPort); err != nil {
 		return
 	}
 
-	// ── Step 4: Send informational root atoms (§3.4, no upd yet) ─────────
-	if err := writeRootAtoms(conn, false); err != nil {
+	// ── Step 4: Send informational root atoms (no upd yet) ───────────────
+	if err := writeRootAtoms(conn, srv.cfg, false); err != nil {
 		return
 	}
 
@@ -230,7 +235,7 @@ func (srv *Server) handleConn(ctx context.Context, conn net.Conn) {
 		_ = pcp.NewIntAtom(pcp.PCPQuit, code).Write(conn)
 	}
 
-	if clientVer < minClientVersion {
+	if clientVer < srv.cfg.MinClientVersion {
 		sendQuit(pcp.PCPErrorQuit + pcp.PCPErrorBadAgent)
 		return
 	}
@@ -243,7 +248,7 @@ func (srv *Server) handleConn(ctx context.Context, conn net.Conn) {
 	}
 
 	srv.mu.Lock()
-	if len(srv.sessions) >= maxCINConnections {
+	if len(srv.sessions) >= srv.cfg.MaxConnections {
 		srv.mu.Unlock()
 		sendQuit(pcp.PCPErrorQuit + pcp.PCPErrorUnavailable)
 		return
@@ -273,7 +278,7 @@ func (srv *Server) handleConn(ctx context.Context, conn net.Conn) {
 
 	slog.Info("CIN connected", "addr", remoteAddr, "agent", clientAgent, "ver", clientVer)
 
-	// ── Step 6: Send ok(0) + root > upd to trigger first tracker update ──
+	// ── Step 6: Send ok(0) + root > upd ──────────────────────────────────
 	if err := pcp.NewIntAtom(pcp.PCPOK, 0).Write(conn); err != nil {
 		return
 	}
@@ -308,9 +313,6 @@ func (srv *Server) handleConn(ctx context.Context, conn net.Conn) {
 // Outgoing packet builders
 // ----------------------------------------------------------------------------
 
-// writeOleh sends the OLEH handshake response.
-// rip is the client's observed global IP; port is the port the client
-// advertised in its HELO (0 if the client is firewalled).
 func writeOleh(w io.Writer, serverSID pcp.GnuID, remoteIP net.IP, clientPort uint16) error {
 	return pcp.NewParentAtom(pcp.PCPOleh,
 		pcp.NewStringAtom(pcp.PCPHeloAgent, agentString),
@@ -321,15 +323,12 @@ func writeOleh(w io.Writer, serverSID pcp.GnuID, remoteIP net.IP, clientPort uin
 	).Write(w)
 }
 
-// writeRootAtoms sends the root information packet (§3.4).
-// If withUpd is true, a root > upd child is appended to request an
-// immediate tracker update from the client.
-func writeRootAtoms(w io.Writer, withUpd bool) error {
-	interval := uint32(updateInterval.Seconds())
+func writeRootAtoms(w io.Writer, cfg Config, withUpd bool) error {
+	interval := uint32(cfg.UpdateInterval.Seconds())
 	children := []*pcp.Atom{
 		pcp.NewIntAtom(pcp.PCPRootUpdInt, interval),
 		pcp.NewStringAtom(pcp.PCPRootURL, ""),
-		pcp.NewIntAtom(pcp.PCPRootCheckVer, minClientVersion),
+		pcp.NewIntAtom(pcp.PCPRootCheckVer, cfg.MinClientVersion),
 		pcp.NewIntAtom(pcp.PCPRootNext, interval),
 		pcp.NewStringAtom(pcp.PCPMesgASCII, ""),
 	}
@@ -339,18 +338,16 @@ func writeRootAtoms(w io.Writer, withUpd bool) error {
 	return pcp.NewParentAtom(pcp.PCPRoot, children...).Write(w)
 }
 
-// broadcastRootSettings sends a bcst > root > upd packet to every live CIN
-// session, replicating C++ ServMgr::broadcastRootSettings(true).
 func (srv *Server) broadcastRootSettings() {
-	interval := uint32(updateInterval.Seconds())
+	interval := uint32(srv.cfg.UpdateInterval.Seconds())
 
 	rootAtom := pcp.NewParentAtom(pcp.PCPRoot,
 		pcp.NewIntAtom(pcp.PCPRootUpdInt, interval),
 		pcp.NewStringAtom(pcp.PCPRootURL, ""),
-		pcp.NewIntAtom(pcp.PCPRootCheckVer, minClientVersion),
+		pcp.NewIntAtom(pcp.PCPRootCheckVer, srv.cfg.MinClientVersion),
 		pcp.NewIntAtom(pcp.PCPRootNext, interval),
 		pcp.NewStringAtom(pcp.PCPMesgASCII, ""),
-		pcp.NewEmptyAtom(pcp.PCPRootUpdate), // upd: request a fresh tracker update
+		pcp.NewEmptyAtom(pcp.PCPRootUpdate),
 	)
 
 	bcst := pcp.NewParentAtom(pcp.PCPBcst,
@@ -376,7 +373,6 @@ func (srv *Server) broadcastRootSettings() {
 		select {
 		case s.sendCh <- bcst:
 		default:
-			// Client is too slow to drain its send buffer; skip this cycle.
 		}
 	}
 }
@@ -385,8 +381,6 @@ func (srv *Server) broadcastRootSettings() {
 // Incoming bcst processing
 // ----------------------------------------------------------------------------
 
-// processBcst handles a bcst atom from a connected tracker client.
-// It parses the chan and host sub-atoms and updates the channel store.
 func (srv *Server) processBcst(sess *session, atom *pcp.Atom) {
 	var routingChanID pcp.GnuID
 	var chanInfo *channel.Info
@@ -412,7 +406,6 @@ func (srv *Server) processBcst(sess *session, atom *pcp.Atom) {
 	if hit.Recv && chanInfo != nil {
 		srv.store.AddHit(*chanInfo, *hit)
 	} else if !hit.Recv {
-		// Client signalling end-of-broadcast (recv=false in flg1).
 		cid := hit.ChanID
 		if cid.IsEmpty() {
 			cid = routingChanID
@@ -425,7 +418,6 @@ func (srv *Server) processBcst(sess *session, atom *pcp.Atom) {
 // Atom parsers
 // ----------------------------------------------------------------------------
 
-// parseHelo extracts the four key fields from a helo container atom.
 func parseHelo(a *pcp.Atom) (agent string, sid pcp.GnuID, port uint16, ver uint32) {
 	for _, child := range a.Children() {
 		switch child.Tag {
@@ -446,9 +438,6 @@ func parseHelo(a *pcp.Atom) (agent string, sid pcp.GnuID, port uint16, ver uint3
 // IP address helpers
 // ----------------------------------------------------------------------------
 
-// encodeIP converts a net.IP to PCP wire-format bytes.
-// IPv4 → 4 bytes as-is.
-// IPv6 → 16 bytes in reversed byte order (per PCP spec §6.5).
 func encodeIP(ip net.IP) []byte {
 	if ip4 := ip.To4(); ip4 != nil {
 		b := make([]byte, 4)

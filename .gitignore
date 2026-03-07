@@ -1,0 +1,5 @@
+# Sensitive configuration — never commit
+.env
+
+# Build output
+/peercast-0yp

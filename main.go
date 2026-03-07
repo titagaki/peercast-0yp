@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"flag"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -13,11 +14,12 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/titagaki/peercast-0yp/archive"
-	"github.com/titagaki/peercast-0yp/channel"
-	"github.com/titagaki/peercast-0yp/config"
-	"github.com/titagaki/peercast-0yp/httpd"
-	"github.com/titagaki/peercast-0yp/server"
+	"github.com/titagaki/peercast-0yp/internal/archive"
+	"github.com/titagaki/peercast-0yp/internal/channel"
+	"github.com/titagaki/peercast-0yp/internal/config"
+	"github.com/titagaki/peercast-0yp/internal/httpd"
+	"github.com/titagaki/peercast-0yp/internal/repository"
+	"github.com/titagaki/peercast-0yp/internal/server"
 )
 
 func main() {
@@ -39,18 +41,26 @@ func main() {
 
 	store := channel.NewStore()
 
-	srv, err := server.New(store)
+	srv, err := server.New(store, server.Config{
+		MaxConnections:   cfg.PCP.MaxConnections,
+		UpdateInterval:   time.Duration(cfg.PCP.UpdateInterval) * time.Second,
+		HitTimeout:       time.Duration(cfg.PCP.HitTimeout) * time.Second,
+		MinClientVersion: cfg.PCP.MinClientVersion,
+	})
 	if err != nil {
 		slog.Error("failed to create PCP server", "err", err)
 		os.Exit(1)
 	}
 
-	rec := archive.New(db, store, slog.Default())
+	sessions := repository.NewSessionRepo(db)
+	snapshots := repository.NewSnapshotRepo(db)
+
+	rec := archive.New(sessions, snapshots, store, slog.Default())
 
 	httpdSrv := httpd.New(httpd.Config{
-		Addr:        cfg.HTTP.Addr,
+		Port:        cfg.HTTP.Port,
 		CORSOrigins: cfg.HTTP.CORSOrigins,
-	}, store, db)
+	}, store, sessions, snapshots)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -77,8 +87,9 @@ func main() {
 		httpdSrv.Shutdown(shutCtx)
 	}()
 
-	slog.Info("starting", "pcp", cfg.PCP.Addr, "http", cfg.HTTP.Addr)
-	if err := srv.ListenAndServe(ctx, cfg.PCP.Addr); err != nil {
+	pcpAddr := fmt.Sprintf(":%d", cfg.PCP.Port)
+	slog.Info("starting", "pcp", pcpAddr, "http", fmt.Sprintf(":%d", cfg.HTTP.Port))
+	if err := srv.ListenAndServe(ctx, pcpAddr); err != nil {
 		slog.Error("PCP server stopped with error", "err", err)
 		os.Exit(1)
 	}
