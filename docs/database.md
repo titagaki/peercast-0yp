@@ -65,6 +65,7 @@ CREATE TABLE channel_snapshots (
     -- リスナー数（全Hitのsum）
     listeners      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     relays         SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    age            MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,  -- tracker hit の UpTime (秒)
 
     -- 配信詳細（LAG()による変化検出用）
     name           VARCHAR(255)      NOT NULL DEFAULT '',
@@ -93,6 +94,7 @@ CREATE TABLE channel_snapshots (
 | `channel_id` | `Info.ID` | 配信時点の GnuID（履歴参照用） |
 | `listeners` | `Hit.NumListeners` の合計 | 全Hitのリスナー数合計 |
 | `relays` | `Hit.NumRelays` の合計 | 全Hitのリレー数合計 |
+| `age` | tracker `Hit.UpTime` | 配信者が報告する配信経過秒数 |
 | `name` | `Info.Name` | チャンネル名 |
 | `bitrate` | `Info.Bitrate` | ビットレート (kbps) |
 | `genre` | `Info.Genre`（パース後） | YPプレフィックス除去後のジャンル |

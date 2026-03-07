@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS channel_snapshots (
     recorded_at      DATETIME          NOT NULL,
     listeners        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     relays           SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    age              MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,  -- tracker hit の UpTime (秒)
     name             VARCHAR(255)      NOT NULL DEFAULT '',
     bitrate          SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     genre            VARCHAR(255)      NOT NULL DEFAULT '',

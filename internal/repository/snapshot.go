@@ -37,31 +37,39 @@ func NewSnapshotRepo(db *sql.DB) *SnapshotRepo {
 // Insert writes a snapshot row for the given session.
 func (r *SnapshotRepo) Insert(ctx context.Context, sessionID int64, s channel.ChannelState, t time.Time) error {
 	hidden := strings.Contains(s.Info.Genre, "?")
+	var age uint32
+	for _, h := range s.Hits {
+		if h.Tracker {
+			age = h.UpTime
+			break
+		}
+	}
 	_, err := r.db.ExecContext(ctx, `
 		INSERT INTO channel_snapshots
 			(session_id, channel_id, recorded_at,
-			 listeners, relays,
-			 name, bitrate, content_type, genre, description, url, comment,
+			 listeners, relays, age,
+			 name, bitrate, genre, url, description, comment, content_type,
 			 hidden_listeners,
-			 track_title, track_artist, track_album, track_contact)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			 track_title, track_artist, track_contact, track_album)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		sessionID,
 		s.Info.ID[:],
 		t,
 		s.Listeners,
 		s.Relays,
+		age,
 		s.Info.Name,
 		s.Info.Bitrate,
-		s.Info.ContentType,
 		stripYPPrefix(s.Info.Genre),
-		s.Info.Desc,
 		s.Info.URL,
+		s.Info.Desc,
 		s.Info.Comment,
+		s.Info.ContentType,
 		hidden,
 		s.Info.Track.Title,
 		s.Info.Track.Artist,
-		s.Info.Track.Album,
 		s.Info.Track.Contact,
+		s.Info.Track.Album,
 	)
 	return err
 }
