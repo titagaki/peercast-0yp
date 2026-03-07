@@ -6,57 +6,45 @@
 
 PeerCast プレイヤーが読み込むチャンネルリスト。YP4G 互換フォーマット。
 
-**レスポンス形式（1行1チャンネル、`<>` 区切り、19フィールド）:**
-
-```
-Name<>ID<>TrackerIP:Port<>URL<>Genre<>Desc<>Listeners<>Relays<>Bitrate<>ContentType<>Artist<>Album<>Title<>Contact<>NameURLEncoded<>Duration<>click<>Comment<>DirectFlag
-```
-
-| フィールド | 内容 |
-|---|---|
-| Name | チャンネル名 |
-| ID | チャンネルID（32文字hex） |
-| TrackerIP:Port | トラッカーのIPアドレスとポート |
-| URL | 配信元URL |
-| Genre | ジャンル（`?` を含む場合リスナー数を隠蔽） |
-| Desc | 説明 |
-| Listeners | リスナー数（隠蔽時は `-1`） |
-| Relays | リレー数（隠蔽時は `-1`） |
-| Bitrate | ビットレート（kbps） |
-| ContentType | コンテンツタイプ（例: `FLV`, `MP3`） |
-| Artist | トラック情報：アーティスト |
-| Album | トラック情報：アルバム |
-| Title | トラック情報：タイトル |
-| Contact | トラック情報：コンタクトURL |
-| NameURLEncoded | チャンネル名をURLエンコードしたもの |
-| Duration | 配信時間（`H:MM` 形式） |
-| `click` | 固定文字列 |
-| Comment | コメント |
-| DirectFlag | Direct接続可能なhitが存在する場合 `1`、それ以外 `0` |
+フォーマット仕様（19フィールド `<>` 区切り）・プレイヤーによる URL 導出ルールは
+[protocol/player.md](protocol/player.md) を参照。
 
 ---
 
-### `GET /getgmt.php?cn={channel_name}`
+### `GET /getgmt.php?cn={channel_name}` ⚠️ 未実装
 
-**統計ページ（YP4G互換URL）。**
-
-PeerCast プレイヤーは `/index.txt` のベースURLとチャンネル名から統計URLを導出する。
-`getgmt.php?cn=` という形式はプレイヤーとの互換性のために固定。
-
-**URL導出ルール（プレイヤー側の動作）:**
-
-```
-index.txt URL:  http://example.com/index.txt
-チャンネル名:   やの
-→ 統計URL:      http://example.com/getgmt.php?cn=%E3%82%84%E3%81%AE
-```
+チャンネルの当日統計を HTML で返す。YP4G 互換 URL。
+プレイヤーによる URL 導出ルールは [protocol/player.md](protocol/player.md) を参照。
 
 | パラメータ | 内容 |
 |---|---|
-| `cn` | チャンネル名（URLエンコード） |
+| `cn` | チャンネル名（URL エンコード） |
 
-チャンネル名から Store（ライブ中）または DB（終了済み）でチャンネル ID を解決し、
-当日の統計データを HTML でレンダリングして返す。
+**チャンネル解決:**
+チャンネル名で Store（ライブ中）を先に検索し、なければ DB（終了済み）から当日分を検索する。
+どちらにも見つからなければ 404。
+
+**レスポンス:** HTML ページ（`text/html`）
+
+表示内容（参考: `_ref/yp4g-html/getgmt.html`）:
+
+| 項目 | 内容 |
+|---|---|
+| タイトル | `{チャンネル名} - Statistics - 0yp` |
+| 各行 | 時刻・リスナー数（合計 / 直接接続）・配信詳細 |
+| 配信詳細 | 前のスナップショットから変化した項目のみ表示（名前・概要・コメント・トラック情報） |
+| データ粒度 | 1分間隔（`channel_snapshots` テーブル） |
+
+---
+
+### `GET /chat.php?cn={channel_name}` ⚠️ 未実装
+
+チャットページ。プレイヤーが `index.txt` の URL から導出して開く。
+実装するまでは 404 を返す。
+
+| パラメータ | 内容 |
+|---|---|
+| `cn` | チャンネル名（URL エンコード） |
 
 ---
 

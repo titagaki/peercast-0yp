@@ -1,0 +1,138 @@
+# システムアーキテクチャ
+
+## 概要
+
+`peercast-0yp` は単一バイナリで動作する PeerCast YP（Yellow Page）サーバです。
+PCP ルートサーバ・HTTP サーバ・アーカイブ記録器を同一プロセスで統合しています。
+
+## コンポーネント構成
+
+```
+main.go
+  ├── channel.Store          ← 共有インメモリ状態
+  ├── server.Server          ← PCP ルートサーバ (port 7144)
+  ├── archive.Recorder       ← MySQL へのアーカイブ記録
+  └── httpd.Server           ← HTTP サーバ (port 80)
+```
+
+### channel.Store (`internal/channel/`)
+
+チャンネル情報とヒット（ノード）のインメモリレジストリ。すべての操作はスレッドセーフ。
+
+| メソッド | 説明 |
+|---|---|
+| `AddHit(info, hit)` | チャンネル情報とホスト情報を登録・更新 |
+| `DelHit(chanID, sessionID)` | ヒットを削除（配信終了時） |
+| `RemoveDeadHits(timeout)` | 一定時間更新のないヒットを自動削除 |
+| `SnapshotOrdered()` | 登録順のチャンネル一覧スナップショット（archive.Recorder 用） |
+| `Snapshot()` | チャンネル全量スナップショット（HTTP API 用） |
+
+### server.Server (`internal/server/`)
+
+TCP/7144 で PCP バイナリプロトコルを処理するルートサーバ。
+
+**接続ごとのライフサイクル:**
+
+```
+Step 1: pcp\n アトムを受信（接続開始確認）
+Step 2: helo アトムを受信 → agent, sid, port, ver をパース
+Step 3: oleh アトムを送信（サーバ情報・クライアントのリモート IP を返す）
+Step 4: root アトムを送信（更新間隔・最小バージョン等の設定情報）
+Step 5: バリデーション（バージョン・セッション ID・重複チェック）
+Step 6: ok(0) + root > upd を送信 → クライアントが即座にチャンネル情報を送信
+Step 7: 送信ゴルーチン（sendLoop）を起動
+Step 8: 読み取りループ: bcst → Store を更新; quit → 切断
+```
+
+**サーバ全体のバックグラウンドタスク:**
+
+| タスク | 間隔 | 内容 |
+|---|---|---|
+| cleanupLoop | 500 ms | `RemoveDeadHits` で古いヒットを削除 |
+| broadcastLoop | 120 秒（設定可能） | 全 CIN セッションに `bcst > root > upd` を送信 |
+
+### archive.Recorder (`internal/archive/`)
+
+`channel.Store` をポーリングし、配信セッションとスナップショットを MySQL に記録する。
+
+- **ポーリング間隔**: 1 秒（セッション開始・終了の検出）
+- **スナップショット記録**: 1 分間隔で `channel_snapshots` に INSERT
+- **起動時処理**: `ended_at = NULL` のレコードを `NOW()` でクローズ（クラッシュリカバリ）
+
+### httpd.Server (`internal/httpd/`)
+
+chi ベースの HTTP サーバ。
+
+| エンドポイント | データソース | 用途 |
+|---|---|---|
+| `GET /index.txt` | channel.Store | PeerCast プレイヤー向けチャンネルリスト |
+| `GET /api/channels` | channel.Store | 現在放送中チャンネル（JSON） |
+| `GET /api/history` | MySQL | 過去の配信セッション一覧 |
+| `GET /api/channels/activity` | MySQL | チャンネル別配信頻度（芝生グラフ用） |
+| `GET /api/channels/timeline` | MySQL | 特定日のスナップショット履歴 |
+
+各エンドポイントの詳細は [HTTP_API.md](HTTP_API.md) を参照。詳細なプロトコル仕様は [protocol/YP_CHANNEL_REGISTRATION.md](protocol/YP_CHANNEL_REGISTRATION.md) を参照。
+
+---
+
+## データフロー
+
+```
+PeerCast クライアント              Web ブラウザ
+  │  PCP (TCP/7144)                │  HTTP (TCP/80)
+  ▼                                ▼
+server.Server                 httpd.Server
+  │ AddHit / DelHit            ├── /api/channels   → channel.Store
+  ▼                            ├── /api/history    → MySQL
+channel.Store                  ├── /index.txt      → channel.Store
+  │                            └── /api/channels/* → MySQL
+  │ SnapshotOrdered() × 1s
+  ▼
+archive.Recorder
+  │ INSERT / UPDATE
+  ▼
+MySQL
+  ├── channel_sessions    ← セッション開始・終了時刻
+  └── channel_snapshots   ← 1分間隔リスナー数スナップショット
+```
+
+---
+
+## データモデル
+
+### インメモリ（channel.Store）
+
+```
+Store
+  └── map[GnuID]*HitList
+        ├── Info（チャンネルメタデータ）
+        │    ├── ID, BroadcastID, Name
+        │    ├── Bitrate, ContentType, Genre, Desc, URL, Comment
+        │    └── Track（Title, Artist, Album, Contact）
+        ├── LastHitTime
+        └── []Hit（ノード一覧）
+              ├── SessionID, ChanID
+              ├── GlobalAddr, LocalAddr
+              ├── NumListeners, NumRelays, UpTime
+              └── Tracker, Relay, Direct, Firewalled, Recv, CIN（flags）
+```
+
+### 永続化（MySQL）
+
+詳細は [../design/schema.md](../design/schema.md) を参照。
+
+| テーブル | 内容 |
+|---|---|
+| `channel_sessions` | 配信セッション（開始・終了時刻、基本メタデータ） |
+| `channel_snapshots` | 1分間隔スナップショット（リスナー数・全メタデータ） |
+
+---
+
+## 設計上の選択
+
+| 項目 | 決定内容 | 理由 |
+|---|---|---|
+| 同一バイナリ | PCP サーバ・HTTP サーバを同一プロセス | Store を直接参照できる。単一マシン運用のためスケールアウト不要 |
+| アーカイブ方式 | ポーリング差分（1 秒） | Store への変更不要で疎結合。スナップショットは 1 分間隔のため精度は十分 |
+| BCID 不変性 | 初回登録後変更不可 | チャンネル「所有権」の簡易検証（C++ 実装踏襲） |
+| セッションごとのゴルーチン | 書き込みは sendLoop、読み取りはメインゴルーチン | 書き込みを直列化しつつ読み取りをブロックさせない |
