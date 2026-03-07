@@ -26,7 +26,7 @@ CREATE TABLE channel_sessions (
     ended_at     DATETIME         NULL,        -- NULL = 配信中
 
     PRIMARY KEY (id),
-    INDEX idx_channel_period (channel_id, started_at, ended_at)
+    INDEX idx_channel_name (channel_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
@@ -82,8 +82,7 @@ CREATE TABLE channel_snapshots (
     track_contact  VARCHAR(255)      NOT NULL DEFAULT '',
 
     PRIMARY KEY (id),
-    INDEX idx_channel_time (channel_id, recorded_at),
-    INDEX idx_session      (session_id)
+    INDEX idx_session_time (session_id, recorded_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
@@ -114,27 +113,28 @@ CREATE TABLE channel_snapshots (
 
 ```sql
 SELECT
-    recorded_at,
-    listeners,
-    relays,
-    name,
-    genre,
-    description,
-    url,
-    comment,
-    track_title,
-    track_artist,
-    LAG(name)        OVER w AS prev_name,
-    LAG(genre)       OVER w AS prev_genre,
-    LAG(description) OVER w AS prev_description,
-    LAG(url)         OVER w AS prev_url,
-    LAG(comment)     OVER w AS prev_comment,
-    LAG(track_title) OVER w AS prev_track_title,
-    LAG(track_artist) OVER w AS prev_track_artist
-FROM channel_snapshots
-WHERE channel_id = ? AND recorded_at >= ? AND recorded_at < ?
-WINDOW w AS (PARTITION BY session_id ORDER BY recorded_at)
-ORDER BY recorded_at;
+    ch.recorded_at,
+    ch.listeners,
+    ch.relays,
+    ch.name,
+    ch.genre,
+    ch.description,
+    ch.url,
+    ch.comment,
+    ch.track_title,
+    ch.track_artist,
+    LAG(ch.name)         OVER w AS prev_name,
+    LAG(ch.genre)        OVER w AS prev_genre,
+    LAG(ch.description)  OVER w AS prev_description,
+    LAG(ch.url)          OVER w AS prev_url,
+    LAG(ch.comment)      OVER w AS prev_comment,
+    LAG(ch.track_title)  OVER w AS prev_track_title,
+    LAG(ch.track_artist) OVER w AS prev_track_artist
+FROM channel_snapshots ch
+JOIN channel_sessions cs ON ch.session_id = cs.id
+WHERE cs.channel_name = ? AND ch.recorded_at >= ? AND ch.recorded_at < ?
+WINDOW w AS (PARTITION BY ch.session_id ORDER BY ch.recorded_at)
+ORDER BY ch.recorded_at;
 ```
 
 アプリ側で `name != prev_name` 等を判定して変化行のみ配信詳細を出力する。
