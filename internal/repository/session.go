@@ -69,10 +69,19 @@ func (r *SessionRepo) Insert(ctx context.Context, s channel.ChannelState, now ti
 	return res.LastInsertId()
 }
 
-// Close sets ended_at on the session row identified by id.
-func (r *SessionRepo) Close(ctx context.Context, id int64, now time.Time) error {
-	_, err := r.db.ExecContext(ctx,
-		`UPDATE channel_sessions SET ended_at = ? WHERE id = ?`, now, id)
+// Close sets ended_at and updates final metadata on the session row identified by id.
+func (r *SessionRepo) Close(ctx context.Context, id int64, s channel.ChannelState, now time.Time) error {
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE channel_sessions
+		SET ended_at = ?, genre = ?, description = ?, url = ?, comment = ?
+		WHERE id = ?`,
+		now,
+		stripYPPrefix(s.Info.Genre),
+		s.Info.Desc,
+		s.Info.URL,
+		s.Info.Comment,
+		id,
+	)
 	return err
 }
 

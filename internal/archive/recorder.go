@@ -26,6 +26,7 @@ type Recorder struct {
 type sessionRecord struct {
 	id        int64
 	startedAt time.Time
+	lastState channel.ChannelState
 }
 
 // New returns a Recorder. Call Start to begin polling.
@@ -70,6 +71,7 @@ func (r *Recorder) poll(ctx context.Context) {
 	}
 
 	// New channels → INSERT channel_sessions.
+	// Active channels → update lastState.
 	for _, s := range states {
 		id := s.Info.ID
 		if _, exists := r.active[id]; !exists {
@@ -78,14 +80,18 @@ func (r *Recorder) poll(ctx context.Context) {
 				r.log.Error("archive: insertSession", "channel", s.Info.Name, "err", err)
 				continue
 			}
-			r.active[id] = sessionRecord{id: sessionID, startedAt: now}
+			r.active[id] = sessionRecord{id: sessionID, startedAt: now, lastState: s}
+		} else {
+			rec := r.active[id]
+			rec.lastState = s
+			r.active[id] = rec
 		}
 	}
 
-	// Gone channels → UPDATE ended_at.
+	// Gone channels → UPDATE ended_at and final metadata.
 	for id, sess := range r.active {
 		if _, exists := currentIDs[id]; !exists {
-			if err := r.sessions.Close(ctx, sess.id, now); err != nil {
+			if err := r.sessions.Close(ctx, sess.id, sess.lastState, now); err != nil {
 				r.log.Error("archive: closeSession", "session_id", sess.id, "err", err)
 			}
 			delete(r.active, id)
