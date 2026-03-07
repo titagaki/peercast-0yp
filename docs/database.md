@@ -3,7 +3,6 @@
 ## 方針
 
 - DATETIME はすべて JST で保存（単一リージョンサービスのためTZ変換不要）
-- `channel_id` は GnuID（16バイト）を `BINARY(16)` で保存
 - チャンネルマスタは持たない。名前等は各テーブルに直接持つ
 
 ---
@@ -16,12 +15,13 @@
 ```sql
 CREATE TABLE channel_sessions (
     id           BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
-    channel_id   BINARY(16)       NOT NULL,
     channel_name VARCHAR(255)     NOT NULL,
     bitrate      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     content_type VARCHAR(32)      NOT NULL DEFAULT '',
     genre        VARCHAR(255)     NOT NULL DEFAULT '',
+    description  VARCHAR(255)     NOT NULL DEFAULT '',
     url          VARCHAR(255)     NOT NULL DEFAULT '',
+    comment      VARCHAR(255)     NOT NULL DEFAULT '',
     started_at   DATETIME         NOT NULL,
     ended_at     DATETIME         NULL,        -- NULL = 配信中
 
@@ -34,12 +34,13 @@ CREATE TABLE channel_sessions (
 
 | カラム | 元フィールド | 説明 |
 |---|---|---|
-| `channel_id` | `Info.ID` | GnuID |
 | `channel_name` | `Info.Name` | セッション開始時点のチャンネル名 |
 | `bitrate` | `Info.Bitrate` | ビットレート (kbps) |
 | `content_type` | `Info.ContentType` | コンテンツタイプ（FLV, MKV等） |
 | `genre` | `Info.Genre`（パース後） | YPプレフィックス除去後のジャンル |
+| `description` | `Info.Desc` | 概要 |
 | `url` | `Info.URL` | コンタクトURL |
+| `comment` | `Info.Comment` | コメント |
 | `started_at` | — | Storeに初めて出現した時刻 |
 | `ended_at` | — | Storeから消えた時刻。配信中は NULL |
 
@@ -60,7 +61,7 @@ CREATE TABLE channel_sessions (
 CREATE TABLE channel_snapshots (
     id             BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
     session_id     BIGINT UNSIGNED   NOT NULL,  -- channel_sessions.id
-    channel_id     BINARY(16)        NOT NULL,  -- 検索用に非正規化
+    channel_id     BINARY(16)        NOT NULL,  -- 履歴参照用
     recorded_at    DATETIME          NOT NULL,
 
     -- リスナー数（全Hitのsum）
@@ -91,7 +92,7 @@ CREATE TABLE channel_snapshots (
 | カラム | 元フィールド | 説明 |
 |---|---|---|
 | `session_id` | — | 所属セッション（`channel_sessions.id`） |
-| `channel_id` | `Info.ID` | タイムライン検索用に非正規化 |
+| `channel_id` | `Info.ID` | 配信時点の GnuID（履歴参照用） |
 | `listeners` | `Hit.NumListeners` の合計 | 全Hitのリスナー数合計 |
 | `relays` | `Hit.NumRelays` の合計 | 全Hitのリレー数合計 |
 | `name` | `Info.Name` | チャンネル名 |

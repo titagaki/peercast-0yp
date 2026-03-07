@@ -13,12 +13,13 @@ import (
 // Session is a row from channel_sessions.
 type Session struct {
 	ID          int64
-	ChannelID   []byte
 	ChannelName string
 	Bitrate     int
 	ContentType string
 	Genre       string
+	Description string
 	URL         string
+	Comment     string
 	StartedAt   time.Time
 	EndedAt     *time.Time
 	DurationMin int
@@ -51,14 +52,15 @@ func (r *SessionRepo) CloseStaleSessions(ctx context.Context) error {
 func (r *SessionRepo) Insert(ctx context.Context, s channel.ChannelState, now time.Time) (int64, error) {
 	res, err := r.db.ExecContext(ctx, `
 		INSERT INTO channel_sessions
-			(channel_id, channel_name, bitrate, content_type, genre, url, started_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		s.Info.ID[:],
+			(channel_name, bitrate, content_type, genre, description, url, comment, started_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		s.Info.Name,
 		s.Info.Bitrate,
 		s.Info.ContentType,
 		stripYPPrefix(s.Info.Genre),
+		s.Info.Desc,
 		s.Info.URL,
+		s.Info.Comment,
 		now,
 	)
 	if err != nil {
@@ -78,7 +80,7 @@ func (r *SessionRepo) Close(ctx context.Context, id int64, now time.Time) error 
 // ordered by started_at DESC.
 func (r *SessionRepo) List(ctx context.Context, limit, offset int) ([]Session, error) {
 	rows, err := r.db.QueryContext(ctx, `
-		SELECT id, channel_id, channel_name, bitrate, content_type, genre, url,
+		SELECT id, channel_name, bitrate, content_type, genre, description, url, comment,
 		       started_at, ended_at,
 		       TIMESTAMPDIFF(MINUTE, started_at, IFNULL(ended_at, NOW())) AS duration_min
 		FROM channel_sessions
@@ -95,8 +97,8 @@ func (r *SessionRepo) List(ctx context.Context, limit, offset int) ([]Session, e
 		var s Session
 		var endedAt sql.NullTime
 		if err := rows.Scan(
-			&s.ID, &s.ChannelID, &s.ChannelName,
-			&s.Bitrate, &s.ContentType, &s.Genre, &s.URL,
+			&s.ID, &s.ChannelName,
+			&s.Bitrate, &s.ContentType, &s.Genre, &s.Description, &s.URL, &s.Comment,
 			&s.StartedAt, &endedAt, &s.DurationMin,
 		); err != nil {
 			return nil, err

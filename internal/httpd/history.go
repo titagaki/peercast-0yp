@@ -1,7 +1,6 @@
 package httpd
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -10,12 +9,13 @@ import (
 
 type sessionJSON struct {
 	ID          int64   `json:"id"`
-	ChannelID   string  `json:"channelId"`
 	ChannelName string  `json:"channelName"`
 	Bitrate     int     `json:"bitrate"`
 	ContentType string  `json:"contentType"`
 	Genre       string  `json:"genre"`
+	Description string  `json:"description"`
 	URL         string  `json:"url"`
+	Comment     string  `json:"comment"`
 	StartedAt   string  `json:"startedAt"`
 	EndedAt     *string `json:"endedAt"`
 	DurationMin int     `json:"durationMin"`
@@ -47,12 +47,13 @@ func (s *Server) handleAPIHistory(w http.ResponseWriter, r *http.Request) {
 	for _, row := range rows {
 		sj := sessionJSON{
 			ID:          row.ID,
-			ChannelID:   hex.EncodeToString(row.ChannelID),
 			ChannelName: row.ChannelName,
 			Bitrate:     row.Bitrate,
 			ContentType: row.ContentType,
 			Genre:       row.Genre,
+			Description: row.Description,
 			URL:         row.URL,
+			Comment:     row.Comment,
 			StartedAt:   row.StartedAt.Format(time.RFC3339),
 			DurationMin: row.DurationMin,
 		}

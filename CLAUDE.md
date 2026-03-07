@@ -54,6 +54,7 @@ HTTP endpoints specified in `docs/HTTP_API.md` but not yet routed in `internal/h
 | YP 登録フロー詳細 | `docs/protocol/YP_CHANNEL_REGISTRATION.md` |
 | プレイヤー連携仕様（index.txt・URL導出） | `docs/protocol/player.md` |
 | ジャンルフォーマット | `docs/protocol/genre.md` |
+| チャンネル識別と統計の設計方針 | `docs/design/channel_identity.md` |
 | 設計意思決定・参考資料 | `docs/design/` |
 
 ## Reference Implementation

@@ -1,11 +1,12 @@
 CREATE TABLE IF NOT EXISTS channel_sessions (
     id           BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
-    channel_id   BINARY(16)        NOT NULL,
     channel_name VARCHAR(255)      NOT NULL,
     bitrate      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     content_type VARCHAR(32)       NOT NULL DEFAULT '',
     genre        VARCHAR(255)      NOT NULL DEFAULT '',
+    description  VARCHAR(255)      NOT NULL DEFAULT '',
     url          VARCHAR(255)      NOT NULL DEFAULT '',
+    comment      VARCHAR(255)      NOT NULL DEFAULT '',
     started_at   DATETIME          NOT NULL,
     ended_at     DATETIME          NULL,        -- NULL = 配信中
 
@@ -16,7 +17,7 @@ CREATE TABLE IF NOT EXISTS channel_sessions (
 CREATE TABLE IF NOT EXISTS channel_snapshots (
     id               BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
     session_id       BIGINT UNSIGNED   NOT NULL,  -- channel_sessions.id
-    channel_id       BINARY(16)        NOT NULL,  -- 検索用に非正規化
+    channel_id       BINARY(16)        NOT NULL,  -- 履歴参照用
     recorded_at      DATETIME          NOT NULL,
     listeners        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     relays           SMALLINT UNSIGNED NOT NULL DEFAULT 0,
