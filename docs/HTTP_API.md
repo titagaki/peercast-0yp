@@ -11,36 +11,19 @@ PeerCast プレイヤーが読み込むチャンネルリスト。YP4G 互換フ
 
 ---
 
-### `GET /getgmt.php?cn={channel_name}` ⚠️ 未実装
+### `GET /getgmt.php?cn={channel_name}`
 
-チャンネルの当日統計を HTML で返す。YP4G 互換 URL。
-プレイヤーによる URL 導出ルールは [protocol/player.md](protocol/player.md) を参照。
+PeerCast プレイヤーが開く統計ページ URL。SPA が `/channels/{name}` にリダイレクトして処理する。
 
 | パラメータ | 内容 |
 |---|---|
 | `cn` | チャンネル名（URL エンコード） |
 
-**チャンネル解決:**
-チャンネル名で Store（ライブ中）を先に検索し、なければ DB（終了済み）から当日分を検索する。
-どちらにも見つからなければ 404。
-
-**レスポンス:** HTML ページ（`text/html`）
-
-表示内容（参考: `_ref/yp4g-html/getgmt.html`）:
-
-| 項目 | 内容 |
-|---|---|
-| タイトル | `{チャンネル名} - Statistics - 0yp` |
-| 各行 | 時刻・リスナー数（合計 / 直接接続）・配信詳細 |
-| 配信詳細 | 前のスナップショットから変化した項目のみ表示（名前・概要・コメント・トラック情報） |
-| データ粒度 | 1分間隔（`channel_snapshots` テーブル） |
-
 ---
 
-### `GET /chat.php?cn={channel_name}` ⚠️ 未実装
+### `GET /chat.php?cn={channel_name}`
 
-チャットページ。プレイヤーが `index.txt` の URL から導出して開く。
-実装するまでは 404 を返す。
+PeerCast プレイヤーが開くチャットページ URL。SPA が「チャット機能を提供していません」ページを表示する。
 
 | パラメータ | 内容 |
 |---|---|
@@ -140,7 +123,7 @@ PeerCast プレイヤーが読み込むチャンネルリスト。YP4G 互換フ
 
 ### `GET /api/channels/timeline?name={channel_name}&date={YYYYMMDD}`
 
-指定チャンネルの特定日のスナップショット履歴（1分刻み）。
+指定チャンネルの特定日のスナップショット履歴（10分刻み）。
 
 | パラメータ | 内容 |
 |---|---|

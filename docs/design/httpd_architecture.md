@@ -45,7 +45,7 @@ PeerCastプレイヤー向け出力・アーカイブ閲覧を提供する多機
   - 時刻
   - リスナー数（合計 / 直接接続）
   - 配信詳細（チャンネル名・概要・コメントなど）— 前回から変化したときのみ表示、変化なしは省略
-- 参考: `_ref/yp4g-html/getgmt.html`（YP4Gの同等ページ、10分間隔）
+- 参考: YP4G の getgmt.php（10分間隔）
 - データ取得: React → `GET /api/channels/{id}/timeline?date=YYYYMMDD` → `channel_snapshots` → JSON
 - `channel_snapshots` には配信詳細の変化検出に必要なフィールド（名前・概要・コメント・トラック情報）も記録する
 - 変化検出は `channel_snapshots` を MySQL の `LAG()` 窓関数でスキャンして行う（変化専用テーブルは持たない）
@@ -95,10 +95,10 @@ func (s *Store) Snapshot() []ChannelState
 ```
 main.go
   ├── channel.Store          ← 共有インメモリ状態（PCPで更新、APIで参照）
-  ├── server.Server          ← PCPルートサーバ (port 7144)
+  ├── server.Server          ← PCPルートサーバ (port 7145)
   │     └── channel.Store への AddHit / DelHit
   ├── archive.Recorder       ← Store の変化を観察し MySQL に記録
-  └── httpd.Server           ← HTTPサーバ (port 未定)
+  └── httpd.Server           ← HTTPサーバ (port 8080)
         ├── GET /api/channels → channel.Store 参照 → JSON（機能1用API）
         ├── GET /api/history  → MySQL 参照 → JSON（機能3用API）
         ├── GET /index.txt    → channel.Store 参照 → index.txt（機能2）
@@ -132,7 +132,7 @@ MySQL
 
 - Recorder が一定間隔（1s）で `Store.Snapshot()` を取得し、前回との差分を検出
 - Store への変更不要（疎結合）
-- スナップショットは1分間隔のため、1s polling でセッション開始・終了の検出精度は十分
+- スナップショットは10分間隔のため、1s polling でセッション開始・終了の検出精度は十分
 
 （却下）A. イベント通知方式: Store に `AddHit`/`DelHit` フックを追加する案。精度のメリットが小さい割に Store の変更コストがあるため不採用。
 
@@ -146,7 +146,7 @@ MySQL
 
 | 項目 | 決定内容 |
 |---|---|
-| HTTPサーバのポート番号 | **80** |
+| HTTPサーバのポート番号 | **8080** |
 | `archive.Recorder` の実装方式 | **ポーリング差分**（1s間隔、Store変更なし） |
 | MySQLのスキーマ設計 | `design/schema.md` 参照 |
 | React SPA のビルド・配置方法 | `go:embed` でバイナリ埋め込み |
@@ -161,7 +161,7 @@ MySQL
 
 ## index.txt フォーマット仕様
 
-出典: `_ref/peercast-yayp/docs/api.md`
+詳細仕様は [../protocol/player.md](../protocol/player.md) を参照。
 
 ### ソート順
 
@@ -201,6 +201,8 @@ MySQL
 | 18 | コメント | |
 | 19 | 直接接続可否 | `0` or `1`。HitList 内のいずれかの Hit に `PCPHostFlags1Direct` が立っていれば `1` |
 
-### 末尾のお知らせ行
+### 末尾のステータス行
 
-チャンネルレコードの末尾に、お知らせ情報を同形式で追加できる（peercast-yayp では `information` テーブルから取得）。**初期実装では未実装とし、将来対応予定。**
+チャンネルレコードの末尾に YP ステータス行を追加する（実装済み）。
+`peercast-0yp.toml` の `[http]` セクションで `yp_name` を設定すると有効になる。
+フォーマットは通常チャンネル行と同じ19フィールドで、ID=全ゼロ、Listeners/Relays=-9、Comment に稼働時間を出力する。
