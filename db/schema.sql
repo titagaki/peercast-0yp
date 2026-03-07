@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS channel_sessions (
     ended_at     DATETIME          NULL,        -- NULL = 配信中
 
     PRIMARY KEY (id),
-    INDEX idx_channel_period (channel_id, started_at, ended_at)
+    INDEX idx_channel_name (channel_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS channel_snapshots (
@@ -34,6 +34,5 @@ CREATE TABLE IF NOT EXISTS channel_snapshots (
     track_contact    VARCHAR(255)      NOT NULL DEFAULT '',
 
     PRIMARY KEY (id),
-    INDEX idx_channel_time (channel_id, recorded_at),
-    INDEX idx_session      (session_id)
+    INDEX idx_session_time (session_id, recorded_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
