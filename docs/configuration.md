@@ -29,13 +29,25 @@
 |---|---|---|---|
 | `port` | int | `80` | HTTP サーバのリッスンポート |
 | `cors_origins` | []string | `[]` | CORS で許可するオリジンのリスト |
+| `yp_name` | string | `""` | YP 名。設定すると `index.txt` 末尾にステータス行を出力 |
+| `yp_url` | string | `""` | ステータス行のリンク先 URL |
 
 `cors_origins` は開発時に React の開発サーバからアクセスする際に設定します。
 本番環境では `[]`（空）のまま運用します（same-origin のため CORS 不要）。
 
+`yp_name` を設定すると `index.txt` の末尾に以下の形式でステータス行が追加されます：
+
+```
+0yp◆Status<>000...000<><>https://example.com<><>稼働中<>-9<>-9<>0<>RAW<><><><><>...<>0:00<>click<>Uptime=3:45:21<>0
+```
+
 ```toml
 # 開発時の設定例
 cors_origins = ["http://localhost:5173"]
+
+# YP ステータス行
+yp_name = "0yp"
+yp_url  = "https://example.com"
 ```
 
 ---
@@ -71,15 +83,17 @@ export DATABASE_DSN="peercast:secret@tcp(localhost:3306)/peercast0yp?parseTime=t
 
 ```toml
 [pcp]
-port = 7144
+port = 7145
 max_connections = 100
 update_interval = 120  # seconds
 hit_timeout = 180      # seconds
 min_client_version = 1200
 
 [http]
-port = 80
+port = 8080
 cors_origins = []  # 本番環境では空に設定
+yp_name = "0yp"
+yp_url  = "https://example.com"
 
 # Database credentials are read from the DATABASE_DSN environment variable.
 ```

@@ -15,6 +15,15 @@ go test -run TestFoo ./internal/server/...
 go vet ./...
 ```
 
+## Docker
+
+```bash
+docker compose up -d          # 起動
+docker compose restart app    # 再起動
+docker compose logs -f app    # ログ
+docker compose down           # 停止
+```
+
 ## Code Structure
 
 ```
@@ -33,14 +42,7 @@ internal/config/         — TOML config loader
 - **BCID immutability**: `Store.AddHit` rejects a mismatched `BroadcastID` once one is set (channel ownership check).
 - **IP encoding**: IPv4 → 4 raw bytes; IPv6 → 16 bytes reversed. See `encodeIP`/`decodeIP` in `internal/server/`.
 - **`index.txt` ordering**: must use `Store.SnapshotOrdered()` (registration order), not `Snapshot()`.
-
-## Unimplemented
-
-HTTP endpoints specified in `docs/HTTP_API.md` but not yet routed in `internal/httpd/server.go`:
-
-- `GET /getgmt.php?cn=` — per-channel stats HTML page
-- `GET /chat.php?cn=` — chat page (return 404 until implemented)
-- React SPA frontend (planned as `go:embed`)
+- **`index.txt` status line**: `yp_name` が設定されている場合、末尾に YP ステータス行を追加（ID=all-zeros、Listeners/Relays=-9、Comment に Uptime）。
 
 ## Documentation
 

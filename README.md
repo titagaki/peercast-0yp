@@ -11,45 +11,49 @@ PCP（PeerCast Protocol）バイナリプロトコルでクライアントから
 - **REST API**: 現在放送中チャンネルおよび配信履歴の JSON API
 - **アーカイブ**: 配信セッション・リスナー数推移を MySQL に記録
 
-## 動作環境
-
-- Go 1.26+
-- MySQL 8.0+
-
 ## クイックスタート
 
-### ビルド
-
 ```bash
-go build ./...
+# 起動
+docker compose up -d
+
+# ログ確認
+docker compose logs -f app
+
+# 再起動（設定変更後など）
+docker compose restart app
+
+# 停止
+docker compose down
 ```
+
+PCP サーバが `:7145`、HTTP サーバが `:8080` で起動します。
 
 ### 設定
 
-```bash
-# 設定ファイルを編集（ポート、接続数など）
-cp peercast-0yp.toml peercast-0yp.toml.bak  # バックアップ（任意）
+`peercast-0yp.toml` を編集してください。Docker 起動時はホストの設定ファイルがコンテナにマウントされます。
 
-# データベース接続情報を環境変数で設定
-export DATABASE_DSN="user:pass@tcp(localhost:3306)/peercast0yp?parseTime=true&loc=Local"
+```toml
+[pcp]
+port = 7145
+
+[http]
+port = 8080
+yp_name = "0yp"
+yp_url  = "https://example.com"
 ```
 
-### 起動
-
-```bash
-./peercast-0yp -config peercast-0yp.toml
-```
-
-PCP サーバが `:7144`、HTTP サーバが `:80` で起動します。
+データベース接続情報は `docker-compose.yml` の `DATABASE_DSN` 環境変数で設定します。
 
 ### PeerCast クライアントの設定
 
 PeerCast の設定画面で「Root Server」（ルートサーバ / YP アドレス）に
-このサーバのホスト名を設定してください。デフォルトポートは 7144 です。
+このサーバのホスト名を設定してください。デフォルトポートは 7145 です。
 
-## テスト
+## 開発
 
 ```bash
+go build ./...
 go test ./...
 go vet ./...
 ```
