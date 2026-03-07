@@ -1,4 +1,20 @@
 services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "7145:7145"
+      - "8080:8080"
+    environment:
+      TZ: Asia/Tokyo
+      DATABASE_DSN: root:password@tcp(mariadb:3306)/peercast?parseTime=true&loc=Local
+    volumes:
+      - ./peercast-0yp.toml:/app/peercast-0yp.toml:ro
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    container_name: peercast-0yp
+
   mariadb:
     image: mariadb:10.11
     restart: unless-stopped
@@ -12,6 +28,12 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     container_name: peercast-0yp-mariadb
 
 volumes:
