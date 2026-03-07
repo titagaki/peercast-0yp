@@ -446,7 +446,7 @@ bcst (PKT, 9 children)
 
 TCP接続が切断された場合:
 - Root Server 側の `PCPStream::readPacket` が `StreamException` ("Send too slow" 等) またはEOFを検出
-- 该ノードのヒットはタイムアウト（180秒）後に自動削除される
+- そのノードのヒットはタイムアウト（180秒）後に自動削除される
 
 ### 7.3 サーバ起因の切断
 
