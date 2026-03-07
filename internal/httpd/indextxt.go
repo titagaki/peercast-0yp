@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/titagaki/peercast-0yp/internal/channel"
 )
@@ -17,6 +18,38 @@ func (s *Server) handleIndexTxt(w http.ResponseWriter, r *http.Request) {
 	for _, cs := range states {
 		writeIndexLine(w, cs)
 	}
+	if s.ypName != "" {
+		writeStatusLine(w, s.ypName, s.ypURL, time.Since(s.startTime))
+	}
+}
+
+// writeStatusLine writes a YP status line at the end of index.txt.
+// Format mirrors p-at.net: a regular 19-field channel line with ID=all-zeros,
+// Listeners/Relays=-9, ContentType=RAW, and uptime info in the Comment field.
+func writeStatusLine(w io.Writer, name, ypURL string, uptime time.Duration) {
+	d := int(uptime.Seconds())
+	days, d := d/86400, d%86400
+	hours, d := d/3600, d%3600
+	mins, secs := d/60, d%60
+
+	var uptimeStr string
+	switch days {
+	case 0:
+		uptimeStr = fmt.Sprintf("%d:%02d:%02d", hours, mins, secs)
+	case 1:
+		uptimeStr = fmt.Sprintf("1 day, %d:%02d:%02d", hours, mins, secs)
+	default:
+		uptimeStr = fmt.Sprintf("%d days, %d:%02d:%02d", days, hours, mins, secs)
+	}
+	comment := "Uptime=" + uptimeStr
+	displayName := name + "◆Status"
+	fmt.Fprintf(w, "%s<>%s<><>%s<><>稼働中<>-9<>-9<>0<>RAW<><><><><>%s<>0:00<>click<>%s<>0\n",
+		displayName,
+		strings.Repeat("0", 32),
+		ypURL,
+		url.QueryEscape(displayName),
+		comment,
+	)
 }
 
 // genreDisplay strips the YP control prefix from a genre string and returns

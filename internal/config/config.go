@@ -28,6 +28,8 @@ type PCPConfig struct {
 type HTTPConfig struct {
 	Port        int      `toml:"port"`         // default 80
 	CORSOrigins []string `toml:"cors_origins"`
+	YPName      string   `toml:"yp_name"` // displayed in index.txt status line; omit to disable
+	YPURL       string   `toml:"yp_url"`  // YP website URL for status line
 }
 
 // DatabaseConfig holds database connection parameters.

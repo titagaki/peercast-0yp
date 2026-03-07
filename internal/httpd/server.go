@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -21,17 +22,29 @@ type Server struct {
 	snapshots *repository.SnapshotRepo
 	router    chi.Router
 	srv       *http.Server
+	ypName    string
+	ypURL     string
+	startTime time.Time
 }
 
 // Config holds HTTP server configuration.
 type Config struct {
 	Port        int
 	CORSOrigins []string
+	YPName      string
+	YPURL       string
 }
 
 // New creates a Server and registers all routes.
 func New(cfg Config, store *channel.Store, sessions *repository.SessionRepo, snapshots *repository.SnapshotRepo) *Server {
-	s := &Server{store: store, sessions: sessions, snapshots: snapshots}
+	s := &Server{
+		store:     store,
+		sessions:  sessions,
+		snapshots: snapshots,
+		ypName:    cfg.YPName,
+		ypURL:     cfg.YPURL,
+		startTime: time.Now(),
+	}
 	s.router = s.buildRouter(cfg.CORSOrigins)
 	s.srv = &http.Server{Addr: fmt.Sprintf(":%d", cfg.Port), Handler: s.router}
 	return s
