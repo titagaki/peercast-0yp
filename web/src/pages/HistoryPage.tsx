@@ -29,51 +29,46 @@ export default function HistoryPage() {
   }, [])
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">放送履歴</h1>
+    <div>
+      <div className="flex items-baseline gap-3 mb-4 border-b-2 border-gray-900 pb-2">
+        <h1 className="font-black text-gray-900 uppercase tracking-tight text-xl">History</h1>
+      </div>
 
       {loading ? (
-        <p className="text-gray-400 text-sm">読み込み中...</p>
+        <p className="text-gray-400 text-xl font-mono">loading...</p>
       ) : (
-        <>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-gray-500 border-b border-gray-200">
-                <th className="py-1 pr-4 font-medium">チャンネル</th>
-                <th className="py-1 pr-4 font-medium">開始</th>
-                <th className="py-1 pr-4 font-medium">時間</th>
-                <th className="py-1 font-medium">形式</th>
+        <table className="w-full text-xl border border-gray-900">
+          <thead>
+            <tr className="text-left border-b-2 border-gray-900 bg-gray-50">
+              <th className="py-2 px-3 font-mono text-base uppercase tracking-wider text-gray-600">チャンネル</th>
+              <th className="py-2 px-3 font-mono text-base uppercase tracking-wider text-gray-600">開始</th>
+              <th className="py-2 px-3 font-mono text-base uppercase tracking-wider text-gray-600">時間</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {sessions.map(s => (
+              <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                <td className="py-2 px-3">
+                  <Link
+                    to={`/channels/${encodeURIComponent(s.channelName)}`}
+                    className="font-bold text-gray-900 hover:underline underline-offset-2"
+                  >
+                    {s.channelName}
+                  </Link>
+                  {s.genre && (
+                    <span className="ml-2 text-base text-gray-400 font-mono">{s.genre}</span>
+                  )}
+                </td>
+                <td className="py-2 px-3 font-mono text-base text-gray-500 tabular-nums whitespace-nowrap">
+                  {fmtDate(s.startedAt)}
+                </td>
+                <td className="py-2 px-3 font-mono text-base tabular-nums">
+                  {fmtDuration(s.durationMin)}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {sessions.map(s => (
-                <tr key={s.id} className="border-b border-gray-100">
-                  <td className="py-1.5 pr-4">
-                    <Link
-                      to={`/channels/${encodeURIComponent(s.channelName)}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {s.channelName}
-                    </Link>
-                    {s.genre && (
-                      <span className="ml-2 text-gray-400">{s.genre}</span>
-                    )}
-                  </td>
-                  <td className="py-1.5 pr-4 tabular-nums text-gray-500">
-                    {fmtDate(s.startedAt)}
-                  </td>
-                  <td className="py-1.5 pr-4 tabular-nums">
-                    {fmtDuration(s.durationMin)}
-                  </td>
-                  <td className="py-1.5 text-gray-500">
-                    {s.contentType} {s.bitrate}kbps
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-        </>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   )

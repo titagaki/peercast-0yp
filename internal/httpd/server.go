@@ -57,6 +57,8 @@ func (s *Server) buildRouter(corsOrigins []string) chi.Router {
 	r.Get("/api/history", s.handleAPIHistory)
 	r.Get("/index.txt", s.handleIndexTxt)
 
+	r.Handle("/*", spaHandler())
+
 	return r
 }
 

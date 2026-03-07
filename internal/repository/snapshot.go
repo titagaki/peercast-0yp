@@ -14,6 +14,7 @@ type SnapshotRow struct {
 	RecordedAt  time.Time
 	Listeners   int
 	Relays      int
+	Hidden      bool
 	Changed     bool
 	Name        string
 	Genre       string
@@ -79,7 +80,7 @@ func (r *SnapshotRepo) Insert(ctx context.Context, sessionID int64, s channel.Ch
 func (r *SnapshotRepo) ListByNameAndDate(ctx context.Context, name string, dayStart, dayEnd time.Time) ([]SnapshotRow, error) {
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT
-			ch.recorded_at, ch.listeners, ch.relays,
+			ch.recorded_at, ch.listeners, ch.relays, ch.hidden_listeners,
 			ch.name, ch.genre, ch.description, ch.url, ch.comment, ch.track_title, ch.track_artist,
 			LAG(ch.name)         OVER w AS prev_name,
 			LAG(ch.genre)        OVER w AS prev_genre,
@@ -104,11 +105,12 @@ func (r *SnapshotRepo) ListByNameAndDate(ctx context.Context, name string, daySt
 	for rows.Next() {
 		var recordedAt time.Time
 		var listeners, relays int
+		var hidden bool
 		var name, genre, desc, url, comment, trackTitle, trackArtist string
 		var prevName, prevGenre, prevDesc, prevURL, prevComment, prevTrackTitle, prevTrackArtist sql.NullString
 
 		if err := rows.Scan(
-			&recordedAt, &listeners, &relays,
+			&recordedAt, &listeners, &relays, &hidden,
 			&name, &genre, &desc, &url, &comment, &trackTitle, &trackArtist,
 			&prevName, &prevGenre, &prevDesc, &prevURL, &prevComment, &prevTrackTitle, &prevTrackArtist,
 		); err != nil {
@@ -128,6 +130,7 @@ func (r *SnapshotRepo) ListByNameAndDate(ctx context.Context, name string, daySt
 			RecordedAt: recordedAt,
 			Listeners:  listeners,
 			Relays:     relays,
+			Hidden:     hidden,
 			Changed:    changed,
 		}
 		if changed {

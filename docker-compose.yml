@@ -7,6 +7,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: peercast
+      TZ: Asia/Tokyo
+    command: --default-time-zone=+09:00
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro

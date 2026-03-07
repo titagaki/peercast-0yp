@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/titagaki/peercast-0yp/internal/channel"
 )
@@ -20,8 +21,8 @@ type channelJSON struct {
 	ContentType  string    `json:"contentType"`
 	Track        trackJSON `json:"track"`
 	Tracker      addrJSON  `json:"tracker"`
-	NumListeners uint32    `json:"numListeners"`
-	NumRelays    uint32    `json:"numRelays"`
+	NumListeners int       `json:"numListeners"`
+	NumRelays    int       `json:"numRelays"`
 	UpTime       uint32    `json:"upTime"`
 }
 
@@ -43,7 +44,7 @@ func buildChannelJSON(hl channel.HitList) channelJSON {
 	out := channelJSON{
 		ID:          fmt.Sprintf("%x", info.ID[:]),
 		Name:        info.Name,
-		Genre:       info.Genre,
+		Genre:       genreDisplay(info.Genre),
 		Desc:        info.Desc,
 		URL:         info.URL,
 		Comment:     info.Comment,
@@ -56,6 +57,7 @@ func buildChannelJSON(hl channel.HitList) channelJSON {
 			Contact: info.Track.Contact,
 		},
 	}
+	hidden := strings.Contains(info.Genre, "?")
 	for _, hit := range hl.Hits {
 		if hit.Tracker {
 			ip := ""
@@ -67,8 +69,13 @@ func buildChannelJSON(hl channel.HitList) channelJSON {
 				Port:       hit.GlobalAddr.Port,
 				Firewalled: hit.Firewalled,
 			}
-			out.NumListeners = hit.NumListeners
-			out.NumRelays = hit.NumRelays
+			if hidden {
+				out.NumListeners = -1
+				out.NumRelays = -1
+			} else {
+				out.NumListeners = int(hit.NumListeners)
+				out.NumRelays = int(hit.NumRelays)
+			}
 			out.UpTime = hit.UpTime
 			break
 		}

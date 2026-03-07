@@ -48,10 +48,14 @@ func (s *Server) handleAPITimeline(w http.ResponseWriter, r *http.Request) {
 
 	result := make([]timelineRowJSON, 0, len(rows))
 	for _, row := range rows {
+		listeners, relays := row.Listeners, row.Relays
+		if row.Hidden {
+			listeners, relays = -1, -1
+		}
 		tj := timelineRowJSON{
 			RecordedAt: row.RecordedAt.Format(time.RFC3339),
-			Listeners:  row.Listeners,
-			Relays:     row.Relays,
+			Listeners:  listeners,
+			Relays:     relays,
 			Changed:    row.Changed,
 		}
 		if row.Changed {

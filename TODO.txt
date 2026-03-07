@@ -1,0 +1,17 @@
+# TODO
+
+## 優先度高
+- [x] go:embed 組み込み — web/dist を Go バイナリに内包、/ で SPA を配信
+- [x] ping ハンドリング — FW_UNKNOWN クライアントのポートチェック実装、視聴確認済み
+- [ ] /api/channels の genre フィールドも yp プレフィックス剥がす（現状は index.txt だけ対応済み）
+
+## 未実装エンドポイント (docs/HTTP_API.md)
+- [ ] GET /getgmt.php?cn= — per-channel 統計 HTML ページ（_ref/yp4g-html/getgmt.html 参照）
+- [ ] GET /chat.php?cn=    — 404 返すだけでよい（SPA 側は実装済み）
+
+## フロントエンド
+- [x] 動作確認（ライブ一覧・履歴・チャンネル詳細）
+- [x] go:embed 経由での配信確認
+
+## インフラ
+- [ ] .env を .gitignore に追加されているか確認

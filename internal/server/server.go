@@ -217,11 +217,18 @@ func (srv *Server) handleConn(ctx context.Context, conn net.Conn) {
 		slog.Debug("expected helo", "got", heloAtom.Tag, "addr", remoteAddr)
 		return
 	}
-	clientAgent, clientSID, clientPort, clientVer := parseHelo(heloAtom)
+	clientAgent, clientSID, clientPort, clientPing, clientVer := parseHelo(heloAtom)
 	slog.Info("HELO", "addr", remoteAddr, "agent", clientAgent, "ver", clientVer)
 
+	// If client sent ping (FW_UNKNOWN), test the port; otherwise use declared port.
+	confirmedPort := clientPort
+	if clientPing != 0 {
+		confirmedPort = checkPort(remoteIP, clientPing)
+		slog.Debug("ping check", "addr", remoteIP, "ping", clientPing, "result", confirmedPort)
+	}
+
 	// ── Step 3: Send OLEH ────────────────────────────────────────────────
-	if err := writeOleh(conn, srv.sessionID, remoteIP, clientPort); err != nil {
+	if err := writeOleh(conn, srv.sessionID, remoteIP, confirmedPort); err != nil {
 		return
 	}
 
@@ -418,7 +425,7 @@ func (srv *Server) processBcst(sess *session, atom *pcp.Atom) {
 // Atom parsers
 // ----------------------------------------------------------------------------
 
-func parseHelo(a *pcp.Atom) (agent string, sid pcp.GnuID, port uint16, ver uint32) {
+func parseHelo(a *pcp.Atom) (agent string, sid pcp.GnuID, port uint16, ping uint16, ver uint32) {
 	for _, child := range a.Children() {
 		switch child.Tag {
 		case pcp.PCPHeloAgent:
@@ -427,11 +434,25 @@ func parseHelo(a *pcp.Atom) (agent string, sid pcp.GnuID, port uint16, ver uint3
 			sid, _ = child.GetID()
 		case pcp.PCPHeloPort:
 			port, _ = child.GetShort()
+		case pcp.PCPHeloPing:
+			ping, _ = child.GetShort()
 		case pcp.PCPHeloVersion:
 			ver, _ = child.GetInt()
 		}
 	}
 	return
+}
+
+// checkPort tries to TCP-connect to ip:port with a 1-second timeout.
+// Returns the port on success, 0 on failure.
+func checkPort(ip net.IP, port uint16) uint16 {
+	addr := net.TCPAddr{IP: ip, Port: int(port)}
+	conn, err := net.DialTimeout("tcp", addr.String(), time.Second)
+	if err != nil {
+		return 0
+	}
+	conn.Close()
+	return port
 }
 
 // ----------------------------------------------------------------------------

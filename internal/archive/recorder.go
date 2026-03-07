@@ -81,6 +81,10 @@ func (r *Recorder) poll(ctx context.Context) {
 				continue
 			}
 			r.active[id] = sessionRecord{id: sessionID, startedAt: now, lastState: s}
+			// Record an initial snapshot at the start of the current 10-minute window.
+			if err := r.snapshots.Insert(ctx, sessionID, s, now.Truncate(10*time.Minute)); err != nil {
+				r.log.Error("archive: insertSnapshot (initial)", "channel", s.Info.Name, "err", err)
+			}
 		} else {
 			rec := r.active[id]
 			rec.lastState = s
@@ -98,9 +102,9 @@ func (r *Recorder) poll(ctx context.Context) {
 		}
 	}
 
-	// Every 1 minute: INSERT snapshots for all active channels.
-	if now.Sub(r.lastSnap) >= time.Minute {
-		snapTime := now.Truncate(time.Minute)
+	// Every 10 minutes: INSERT snapshots for all active channels.
+	if now.Sub(r.lastSnap) >= 10*time.Minute {
+		snapTime := now.Truncate(10 * time.Minute)
 		for _, s := range states {
 			sess, ok := r.active[s.Info.ID]
 			if !ok {

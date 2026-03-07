@@ -13,10 +13,23 @@ import (
 func (s *Server) handleIndexTxt(w http.ResponseWriter, r *http.Request) {
 	states := s.store.SnapshotOrdered()
 
-	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 	for _, cs := range states {
 		writeIndexLine(w, cs)
 	}
+}
+
+// genreDisplay strips the YP control prefix from a genre string and returns
+// only the display portion. Format: yp[NS:][?][@@@]genre
+func genreDisplay(genre string) string {
+	s := strings.TrimPrefix(genre, "yp")
+	// strip optional namespace (alphanum chars followed by ":")
+	if i := strings.IndexByte(s, ':'); i >= 0 {
+		s = s[i+1:]
+	}
+	// strip listener-hide flag and port-check flags
+	s = strings.TrimLeft(s, "?@")
+	return s
 }
 
 func writeIndexLine(w io.Writer, cs channel.ChannelState) {
@@ -60,7 +73,7 @@ func writeIndexLine(w io.Writer, cs channel.ChannelState) {
 		fmt.Sprintf("%x", info.ID[:]),
 		trackerAddr,
 		info.URL,
-		info.Genre,
+		genreDisplay(info.Genre),
 		info.Desc,
 		listeners,
 		relays,

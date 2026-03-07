@@ -1,12 +1,12 @@
 [pcp]
-port = 7144
+port = 7145
 max_connections = 100
 update_interval = 120  # seconds
 hit_timeout = 180      # seconds
 min_client_version = 1200
 
 [http]
-port = 80
+port = 8080
 cors_origins = ["http://localhost:5173"]
 
 # Database credentials are read from the DATABASE_DSN environment variable.

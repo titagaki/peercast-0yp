@@ -144,10 +144,13 @@ func (r *SessionRepo) ListIntervalsByName(ctx context.Context, name string) ([]S
 	return intervals, rows.Err()
 }
 
-// stripYPPrefix removes a "xx:" YP prefix from genre strings (e.g. "ap:Music" → "Music").
+// stripYPPrefix strips the YP control prefix from a genre string.
+// Format: yp[NS:][?][@@@]genre → genre
 func stripYPPrefix(genre string) string {
-	if idx := strings.Index(genre, ":"); idx != -1 {
-		return genre[idx+1:]
+	s := strings.TrimPrefix(genre, "yp")
+	if i := strings.IndexByte(s, ':'); i >= 0 {
+		s = s[i+1:]
 	}
-	return genre
+	s = strings.TrimLeft(s, "?@")
+	return s
 }
