@@ -94,6 +94,27 @@ PeerCast プレイヤーが読み込むチャンネルリスト。YP4G 互換フ
 | `limit` | 50 | 200 |
 | `offset` | 0 | — |
 
+**レスポンス（JSON配列）:**
+
+```json
+[
+  {
+    "id": 42,
+    "channelName": "チャンネル名",
+    "contentType": "FLV",
+    "genre": "Music",
+    "description": "説明",
+    "url": "http://...",
+    "comment": "コメント",
+    "startedAt": "2026-03-07T20:00:00+09:00",
+    "endedAt": "2026-03-07T22:30:00+09:00",
+    "durationMin": 150
+  }
+]
+```
+
+`endedAt` は配信中の場合 `null`。過去7日分を `startedAt DESC` で返す。
+
 ---
 
 ### `GET /api/channels/activity?name={channel_name}`
@@ -103,6 +124,17 @@ PeerCast プレイヤーが読み込むチャンネルリスト。YP4G 互換フ
 | パラメータ | 内容 |
 |---|---|
 | `name` | チャンネル名 |
+
+**レスポンス（JSON配列）:**
+
+```json
+[
+  { "date": "2026-03-07", "minutes": 150 },
+  { "date": "2026-03-06", "minutes": 60 }
+]
+```
+
+`date` 昇順。放送のなかった日は含まれない。
 
 ---
 
@@ -114,3 +146,31 @@ PeerCast プレイヤーが読み込むチャンネルリスト。YP4G 互換フ
 |---|---|
 | `name` | チャンネル名 |
 | `date` | 日付（`YYYYMMDD` 形式） |
+
+**レスポンス（JSON配列）:**
+
+```json
+[
+  {
+    "recordedAt": "2026-03-07T20:00:00+09:00",
+    "listeners": 5,
+    "relays": 2,
+    "changed": true,
+    "name": "チャンネル名",
+    "genre": "Music",
+    "description": "説明",
+    "url": "http://...",
+    "comment": "コメント",
+    "trackTitle": "曲名",
+    "trackArtist": "アーティスト"
+  },
+  {
+    "recordedAt": "2026-03-07T20:01:00+09:00",
+    "listeners": 7,
+    "relays": 2,
+    "changed": false
+  }
+]
+```
+
+`changed: false` の行はリスナー数・リレー数のみ。`changed: true` の行はメタデータに変化があった時点で、変化内容のフィールドも含む（`omitempty`）。
