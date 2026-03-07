@@ -56,24 +56,4 @@ go vet ./...
 
 ## ドキュメント
 
-| ドキュメント | 内容 |
-|---|---|
-| [docs/architecture.md](docs/architecture.md) | システムアーキテクチャ・コンポーネント構成 |
-| [docs/configuration.md](docs/configuration.md) | 設定ファイルリファレンス |
-| [docs/HTTP_API.md](docs/HTTP_API.md) | HTTP API エンドポイント仕様 |
-
-### プロトコル仕様（PeerCast）
-
-| ドキュメント | 内容 |
-|---|---|
-| [docs/protocol/player.md](docs/protocol/player.md) | PeerCast プレイヤーの YP 連携仕様（index.txt・URL 導出） |
-| [docs/protocol/YP_CHANNEL_REGISTRATION.md](docs/protocol/YP_CHANNEL_REGISTRATION.md) | YP 登録プロトコル詳細（PCP） |
-| [docs/protocol/PCP_SPEC.md](docs/protocol/PCP_SPEC.md) | PCP プロトコル仕様 |
-
-### 設計文書（実装者向け）
-
-| ドキュメント | 内容 |
-|---|---|
-| [docs/database.md](docs/database.md) | MySQL スキーマ設計 |
-| [docs/design/httpd_architecture.md](docs/design/httpd_architecture.md) | httpd 設計詳細 |
-| [docs/design/references.md](docs/design/references.md) | 参考資料一覧 |
+→ [docs/index.md](docs/index.md)
