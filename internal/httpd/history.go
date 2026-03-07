@@ -10,7 +10,6 @@ import (
 type sessionJSON struct {
 	ID          int64   `json:"id"`
 	ChannelName string  `json:"channelName"`
-	Bitrate     int     `json:"bitrate"`
 	ContentType string  `json:"contentType"`
 	Genre       string  `json:"genre"`
 	Description string  `json:"description"`
@@ -48,7 +47,6 @@ func (s *Server) handleAPIHistory(w http.ResponseWriter, r *http.Request) {
 		sj := sessionJSON{
 			ID:          row.ID,
 			ChannelName: row.ChannelName,
-			Bitrate:     row.Bitrate,
 			ContentType: row.ContentType,
 			Genre:       row.Genre,
 			Description: row.Description,

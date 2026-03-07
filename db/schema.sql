@@ -1,7 +1,6 @@
 CREATE TABLE IF NOT EXISTS channel_sessions (
     id           BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
     channel_name VARCHAR(255)      NOT NULL,
-    bitrate      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     content_type VARCHAR(32)       NOT NULL DEFAULT '',
     genre        VARCHAR(255)      NOT NULL DEFAULT '',
     description  VARCHAR(255)      NOT NULL DEFAULT '',
