@@ -1,11 +1,11 @@
 CREATE TABLE IF NOT EXISTS channel_sessions (
     id           BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
     channel_name VARCHAR(255)      NOT NULL,
-    content_type VARCHAR(32)       NOT NULL DEFAULT '',
     genre        VARCHAR(255)      NOT NULL DEFAULT '',
-    description  VARCHAR(255)      NOT NULL DEFAULT '',
     url          VARCHAR(255)      NOT NULL DEFAULT '',
+    description  VARCHAR(255)      NOT NULL DEFAULT '',
     comment      VARCHAR(255)      NOT NULL DEFAULT '',
+    content_type VARCHAR(32)       NOT NULL DEFAULT '',
     started_at   DATETIME          NOT NULL,
     ended_at     DATETIME          NULL,        -- NULL = 配信中
 
@@ -22,16 +22,16 @@ CREATE TABLE IF NOT EXISTS channel_snapshots (
     relays           SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     name             VARCHAR(255)      NOT NULL DEFAULT '',
     bitrate          SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    content_type     VARCHAR(32)       NOT NULL DEFAULT '',
     genre            VARCHAR(255)      NOT NULL DEFAULT '',
-    description      VARCHAR(255)      NOT NULL DEFAULT '',
     url              VARCHAR(255)      NOT NULL DEFAULT '',
+    description      VARCHAR(255)      NOT NULL DEFAULT '',
     comment          VARCHAR(255)      NOT NULL DEFAULT '',
+    content_type     VARCHAR(32)       NOT NULL DEFAULT '',
     hidden_listeners BOOLEAN           NOT NULL DEFAULT 0,
     track_title      VARCHAR(255)      NOT NULL DEFAULT '',
     track_artist     VARCHAR(255)      NOT NULL DEFAULT '',
-    track_album      VARCHAR(255)      NOT NULL DEFAULT '',
     track_contact    VARCHAR(255)      NOT NULL DEFAULT '',
+    track_album      VARCHAR(255)      NOT NULL DEFAULT '',
 
     PRIMARY KEY (id),
     INDEX idx_session_time (session_id, recorded_at)

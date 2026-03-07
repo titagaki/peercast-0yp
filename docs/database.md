@@ -16,11 +16,11 @@
 CREATE TABLE channel_sessions (
     id           BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
     channel_name VARCHAR(255)     NOT NULL,
-    content_type VARCHAR(32)      NOT NULL DEFAULT '',
     genre        VARCHAR(255)     NOT NULL DEFAULT '',
-    description  VARCHAR(255)     NOT NULL DEFAULT '',
     url          VARCHAR(255)     NOT NULL DEFAULT '',
+    description  VARCHAR(255)     NOT NULL DEFAULT '',
     comment      VARCHAR(255)     NOT NULL DEFAULT '',
+    content_type VARCHAR(32)      NOT NULL DEFAULT '',
     started_at   DATETIME         NOT NULL,
     ended_at     DATETIME         NULL,        -- NULL = 配信中
 
@@ -34,11 +34,11 @@ CREATE TABLE channel_sessions (
 | カラム | 元フィールド | 説明 |
 |---|---|---|
 | `channel_name` | `Info.Name` | セッション開始時点のチャンネル名 |
-| `content_type` | `Info.ContentType` | コンテンツタイプ（FLV, MKV等） |
 | `genre` | `Info.Genre`（パース後） | YPプレフィックス除去後のジャンル |
-| `description` | `Info.Desc` | 概要 |
 | `url` | `Info.URL` | コンタクトURL |
+| `description` | `Info.Desc` | 概要 |
 | `comment` | `Info.Comment` | コメント |
+| `content_type` | `Info.ContentType` | コンテンツタイプ（FLV, MKV等） |
 | `started_at` | — | Storeに初めて出現した時刻 |
 | `ended_at` | — | Storeから消えた時刻。配信中は NULL |
 
@@ -69,16 +69,16 @@ CREATE TABLE channel_snapshots (
     -- 配信詳細（LAG()による変化検出用）
     name           VARCHAR(255)      NOT NULL DEFAULT '',
     bitrate        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-    content_type   VARCHAR(32)       NOT NULL DEFAULT '',
     genre          VARCHAR(255)      NOT NULL DEFAULT '',
-    description    VARCHAR(255)      NOT NULL DEFAULT '',
     url            VARCHAR(255)      NOT NULL DEFAULT '',
+    description    VARCHAR(255)      NOT NULL DEFAULT '',
     comment        VARCHAR(255)      NOT NULL DEFAULT '',
+    content_type   VARCHAR(32)       NOT NULL DEFAULT '',
     hidden_listeners BOOLEAN         NOT NULL DEFAULT 0,
     track_title    VARCHAR(255)      NOT NULL DEFAULT '',
     track_artist   VARCHAR(255)      NOT NULL DEFAULT '',
-    track_album    VARCHAR(255)      NOT NULL DEFAULT '',
     track_contact  VARCHAR(255)      NOT NULL DEFAULT '',
+    track_album    VARCHAR(255)      NOT NULL DEFAULT '',
 
     PRIMARY KEY (id),
     INDEX idx_session_time (session_id, recorded_at)
@@ -95,16 +95,16 @@ CREATE TABLE channel_snapshots (
 | `relays` | `Hit.NumRelays` の合計 | 全Hitのリレー数合計 |
 | `name` | `Info.Name` | チャンネル名 |
 | `bitrate` | `Info.Bitrate` | ビットレート (kbps) |
-| `content_type` | `Info.ContentType` | コンテンツタイプ |
 | `genre` | `Info.Genre`（パース後） | YPプレフィックス除去後のジャンル |
-| `description` | `Info.Desc` | 概要 |
 | `url` | `Info.URL` | コンタクトURL |
+| `description` | `Info.Desc` | 概要 |
 | `comment` | `Info.Comment` | コメント |
+| `content_type` | `Info.ContentType` | コンテンツタイプ |
 | `hidden_listeners` | ジャンル `?` フラグ | リスナー数非表示フラグ |
 | `track_title` | `Track.Title` | トラックタイトル |
 | `track_artist` | `Track.Artist` | トラックアーティスト |
-| `track_album` | `Track.Album` | トラックアルバム |
 | `track_contact` | `Track.Contact` | トラックコンタクト |
+| `track_album` | `Track.Album` | トラックアルバム |
 
 ### タイムライン取得クエリ（概要）
 
