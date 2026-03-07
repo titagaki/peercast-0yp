@@ -28,7 +28,7 @@ func addChannel(store *channel.Store, name string, chanID, bcID, sessID pcp.GnuI
 		Name:        name,
 		Bitrate:     128,
 		ContentType: "MP3",
-		Genre:       "Music",
+		Genre:       "ypMusic",
 		Track:       channel.Track{Title: "Song", Artist: "Artist"},
 	}
 	hit := channel.Hit{

@@ -20,7 +20,7 @@ func makeGnuID(b byte) pcp.GnuID {
 }
 
 func makeInfo(chanID, bcID pcp.GnuID, name string) channel.Info {
-	return channel.Info{ID: chanID, BroadcastID: bcID, Name: name}
+	return channel.Info{ID: chanID, BroadcastID: bcID, Name: name, Genre: "ypTest"}
 }
 
 func makeHit(sessionID, chanID pcp.GnuID, globalIP string, globalPort int, recv bool) channel.Hit {
@@ -138,6 +138,21 @@ func TestRemoveDeadHits(t *testing.T) {
 	s.RemoveDeadHits(0)
 	if _, ok := s.Snapshot()[chanID]; ok {
 		t.Error("hit should have been removed by zero-timeout cleanup")
+	}
+}
+
+// TestAddHit_rejectNonYPGenre verifies that channels without the yp genre prefix are ignored.
+func TestAddHit_rejectNonYPGenre(t *testing.T) {
+	s := channel.NewStore()
+	chanID := makeGnuID(0x01)
+	bcID := makeGnuID(0x02)
+	sessID := makeGnuID(0x03)
+
+	info := channel.Info{ID: chanID, BroadcastID: bcID, Name: "Chan", Genre: "Music"}
+	s.AddHit(info, makeHit(sessID, chanID, "1.2.3.4", 7144, true))
+
+	if _, ok := s.Snapshot()[chanID]; ok {
+		t.Error("channel without yp genre prefix should not have been registered")
 	}
 }
 

@@ -24,7 +24,7 @@ func makeChannelState(name, genre string, listeners, relays int, hits []channel.
 			Name:        name,
 			Bitrate:     256,
 			ContentType: "FLV",
-			Genre:       genre,
+			Genre:       "yp" + genre,
 			Desc:        "A description",
 			URL:         "http://example.com",
 			Comment:     "A comment",

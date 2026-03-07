@@ -199,7 +199,7 @@ func sendBcst(t *testing.T, conn net.Conn, opts BcstOptions) {
 		pcp.NewParentAtom(pcp.PCPChanInfo,
 			pcp.NewStringAtom(pcp.PCPChanInfoName, name),
 			pcp.NewIntAtom(pcp.PCPChanInfoBitrate, bitrate),
-			pcp.NewStringAtom(pcp.PCPChanInfoGenre, "Test"),
+			pcp.NewStringAtom(pcp.PCPChanInfoGenre, "ypTest"),
 			pcp.NewStringAtom(pcp.PCPChanInfoType, "MP3"),
 		),
 		pcp.NewParentAtom(pcp.PCPChanTrack),

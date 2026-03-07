@@ -47,16 +47,31 @@ func (r *Recorder) Start(ctx context.Context) {
 		r.log.Error("archive: closeStaleSessions", "err", err)
 	}
 
+	r.lastSnap = time.Now()
+
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
+			r.closeAllSessions()
 			return
 		case <-tick.C:
 			r.poll(ctx)
 		}
+	}
+}
+
+// closeAllSessions closes all active sessions on graceful shutdown.
+func (r *Recorder) closeAllSessions() {
+	ctx := context.Background()
+	now := time.Now()
+	for id, sess := range r.active {
+		if err := r.sessions.Close(ctx, sess.id, sess.lastState, now); err != nil {
+			r.log.Error("archive: closeSession (shutdown)", "session_id", sess.id, "err", err)
+		}
+		delete(r.active, id)
 	}
 }
 

@@ -6,6 +6,7 @@ package channel
 import (
 	"net"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -109,7 +110,7 @@ func NewStore() *Store {
 //     replaced.
 //  3. If no match is found, the hit is appended.
 func (s *Store) AddHit(info Info, hit Hit) {
-	if info.ID.IsEmpty() || info.Name == "" {
+	if info.ID.IsEmpty() || info.Name == "" || !strings.HasPrefix(info.Genre, "yp") {
 		return
 	}
 
