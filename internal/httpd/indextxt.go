@@ -18,9 +18,23 @@ func (s *Server) handleIndexTxt(w http.ResponseWriter, r *http.Request) {
 	for _, cs := range states {
 		writeIndexLine(w, cs)
 	}
+	for _, info := range s.infoLines {
+		writeInfoLine(w, info.Name, info.URL, info.Comment)
+	}
 	if s.ypName != "" {
 		writeStatusLine(w, s.ypName, s.ypURL, time.Since(s.startTime))
 	}
+}
+
+// writeInfoLine writes a single announcement line above the status line in index.txt.
+// Uses all-zero ID, Listeners/Relays=-9, ContentType=RAW.
+func writeInfoLine(w io.Writer, name, contactURL, comment string) {
+	fmt.Fprintf(w, "%s<>%s<><>%s<><>%s<>-9<>-9<>0<>RAW<><><><><><>00:00<>click<><>0\n",
+		name,
+		strings.Repeat("0", 32),
+		contactURL,
+		comment,
+	)
 }
 
 // writeStatusLine writes a YP status line at the end of index.txt.
@@ -41,14 +55,12 @@ func writeStatusLine(w io.Writer, name, ypURL string, uptime time.Duration) {
 	default:
 		uptimeStr = fmt.Sprintf("%d days, %d:%02d:%02d", days, hours, mins, secs)
 	}
-	comment := "Uptime=" + uptimeStr
 	displayName := name + "◆Status"
-	fmt.Fprintf(w, "%s<>%s<><>%s<><>稼働中<>-9<>-9<>0<>RAW<><><><><>%s<>0:00<>click<>%s<>0\n",
+	fmt.Fprintf(w, "%s<>%s<><>%s<><>%s<>-9<>-9<>0<>RAW<><><><><><>0:00<>click<><>0\n",
 		displayName,
 		strings.Repeat("0", 32),
 		ypURL,
-		url.QueryEscape(displayName),
-		comment,
+		"Uptime="+uptimeStr,
 	)
 }
 

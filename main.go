@@ -82,11 +82,16 @@ func main() {
 
 	rec := archive.New(sessions, snapshots, store, slog.Default())
 
+	infoLines := make([]httpd.InfoLine, len(cfg.HTTP.Info))
+	for i, il := range cfg.HTTP.Info {
+		infoLines[i] = httpd.InfoLine{Name: il.Name, Comment: il.Comment, URL: il.URL}
+	}
 	httpdSrv := httpd.New(httpd.Config{
 		Port:        cfg.HTTP.Port,
 		CORSOrigins: cfg.HTTP.CORSOrigins,
 		YPName:      cfg.HTTP.YPName,
 		YPURL:       cfg.HTTP.YPURL,
+		InfoLines:   infoLines,
 	}, store, sessions, snapshots)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

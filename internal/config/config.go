@@ -24,12 +24,20 @@ type PCPConfig struct {
 	MinClientVersion uint32 `toml:"min_client_version"` // default 1200
 }
 
+// InfoLine is a single announcement entry shown in index.txt.
+type InfoLine struct {
+	Name    string `toml:"name"`
+	Comment string `toml:"comment"`
+	URL     string `toml:"url"`
+}
+
 // HTTPConfig is HTTP server settings.
 type HTTPConfig struct {
-	Port        int      `toml:"port"`         // default 80
-	CORSOrigins []string `toml:"cors_origins"`
-	YPName      string   `toml:"yp_name"` // displayed in index.txt status line; omit to disable
-	YPURL       string   `toml:"yp_url"`  // YP website URL for status line
+	Port        int        `toml:"port"`         // default 80
+	CORSOrigins []string   `toml:"cors_origins"`
+	YPName      string     `toml:"yp_name"` // displayed in index.txt status line; omit to disable
+	YPURL       string     `toml:"yp_url"`  // YP website URL for status line
+	Info        []InfoLine `toml:"info"`    // announcement lines shown at top of index.txt
 }
 
 // DatabaseConfig holds database connection parameters.

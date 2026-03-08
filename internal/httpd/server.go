@@ -15,6 +15,13 @@ import (
 	"github.com/titagaki/peercast-0yp/internal/repository"
 )
 
+// InfoLine is a single announcement entry shown in index.txt.
+type InfoLine struct {
+	Name    string
+	Comment string
+	URL     string
+}
+
 // Server is the HTTP server for the PeerCast YP.
 type Server struct {
 	store     *channel.Store
@@ -25,6 +32,7 @@ type Server struct {
 	ypName    string
 	ypURL     string
 	startTime time.Time
+	infoLines []InfoLine
 }
 
 // Config holds HTTP server configuration.
@@ -33,6 +41,7 @@ type Config struct {
 	CORSOrigins []string
 	YPName      string
 	YPURL       string
+	InfoLines   []InfoLine
 }
 
 // New creates a Server and registers all routes.
@@ -44,6 +53,7 @@ func New(cfg Config, store *channel.Store, sessions *repository.SessionRepo, sna
 		ypName:    cfg.YPName,
 		ypURL:     cfg.YPURL,
 		startTime: time.Now(),
+		infoLines: cfg.InfoLines,
 	}
 	s.router = s.buildRouter(cfg.CORSOrigins)
 	s.srv = &http.Server{Addr: fmt.Sprintf(":%d", cfg.Port), Handler: s.router}

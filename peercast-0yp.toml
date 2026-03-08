@@ -9,7 +9,18 @@ min_client_version = 1200
 port = 8080
 cors_origins = ["http://localhost:5173"]
 yp_name = "0yp"
-yp_url  = "https://example.com"
+yp_url  = "http://localhost:8080/"
+
+# Announcement lines shown above the status line in index.txt (optional, multiple allowed).
+[[http.info]]
+name    = "0yp ※お知らせ 2026/3/8"
+comment = "0ypは現在試験運用中です。"
+url     = ""
+
+# [[http.info]]
+# name    = "0yp ※配信ルール"
+# comment = "違法コンテンツの配信は禁止です。"
+# url     = "https://example.com/rules"
 
 # Database credentials are read from the DATABASE_DSN environment variable.
 # See .env.example
