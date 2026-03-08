@@ -20,7 +20,7 @@ import (
 	"github.com/titagaki/peercast-0yp/internal/config"
 	"github.com/titagaki/peercast-0yp/internal/httpd"
 	"github.com/titagaki/peercast-0yp/internal/repository"
-	"github.com/titagaki/peercast-0yp/internal/server"
+	"github.com/titagaki/peercast-0yp/internal/pcp"
 )
 
 // loadDotEnv reads key=value pairs from .env and sets them as environment
@@ -66,7 +66,7 @@ func main() {
 
 	store := channel.NewStore()
 
-	srv, err := server.New(store, server.Config{
+	srv, err := pcp.New(store, pcp.Config{
 		MaxConnections:   cfg.PCP.MaxConnections,
 		UpdateInterval:   time.Duration(cfg.PCP.UpdateInterval) * time.Second,
 		HitTimeout:       time.Duration(cfg.PCP.HitTimeout) * time.Second,

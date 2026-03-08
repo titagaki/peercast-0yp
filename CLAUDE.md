@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 go build ./...
 go test ./...
-go test -run TestFoo ./internal/server/...
+go test -run TestFoo ./internal/pcp/...
 go vet ./...
 ```
 
@@ -29,7 +29,7 @@ docker compose down           # 停止
 ```
 main.go                  — entry point, wires all components
 internal/channel/        — Info, Track, Hit, HitList, Store (thread-safe registry)
-internal/server/         — PCP root server: handshake, bcst parsing, session management
+internal/pcp/            — PCP root server: handshake, bcst parsing, session management
 internal/archive/        — Recorder: polls Store every 1s, writes sessions/snapshots to MySQL
 internal/httpd/          — chi HTTP server: index.txt, /api/* endpoints
 internal/repository/     — MySQL access (SessionRepo, SnapshotRepo)
@@ -40,7 +40,7 @@ internal/config/         — TOML config loader
 
 - **Genre `yp` prefix**: channels whose `Genre` does not start with `yp` are not registered to this YP — exclude silently from `Store.AddHit` and `index.txt`. See `docs/protocol/genre.md`.
 - **BCID immutability**: `Store.AddHit` rejects a mismatched `BroadcastID` once one is set (channel ownership check).
-- **IP encoding**: IPv4 → 4 raw bytes; IPv6 → 16 bytes reversed. See `encodeIP`/`decodeIP` in `internal/server/`.
+- **IP encoding**: IPv4 → 4 raw bytes; IPv6 → 16 bytes reversed. See `encodeIP`/`decodeIP` in `internal/pcp/`.
 - **`index.txt` ordering**: must use `Store.SnapshotOrdered()` (registration order), not `Snapshot()`.
 - **`index.txt` status line**: `yp_name` が設定されている場合、末尾に YP ステータス行を追加（ID=all-zeros、Listeners/Relays=-9、Comment に Uptime）。
 

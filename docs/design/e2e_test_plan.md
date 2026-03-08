@@ -69,7 +69,7 @@ channel情報がStoreに積まれるまでの一連の流れを検証する。
 ### H-05 ループバック検出 ☐ 未実装
 **目的**: サーバ自身のSIDと同じSIDを送るとサイレントクローズされること
 
-前提: `server.Server` にSessionIDを取得するメソッド（`SessionID() GnuID` など）が必要、
+前提: `pcp.Server` にSessionIDを取得するメソッド（`SessionID() GnuID` など）が必要、
 または `Server.New` を呼び出した後に `srv.SessionID` フィールドを公開する。
 
 手順:
