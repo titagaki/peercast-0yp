@@ -146,7 +146,7 @@ export default function ChannelDetailPage() {
   // Only show detail text on changed rows
   const rows = timeline.map(row => ({
     ...row,
-    detail: row.changed ? (row.trackTitle || row.description || '') : '',
+    detail: row.changed ? [row.genre, row.trackTitle || row.description].filter(Boolean).join(' / ') : '',
   }))
 
   return (

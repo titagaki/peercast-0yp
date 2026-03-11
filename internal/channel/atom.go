@@ -139,7 +139,9 @@ func decodeIP(data []byte) net.IP {
 	switch len(data) {
 	case 4:
 		ip := make(net.IP, 4)
-		copy(ip, data)
+		for i, b := range data {
+			ip[3-i] = b
+		}
 		return ip
 	case 16:
 		ip := make(net.IP, 16)

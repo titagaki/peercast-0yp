@@ -105,11 +105,15 @@ port = 17144
 	}
 }
 
-// TestLoad_DatabaseDSN_FromEnv verifies that DATABASE_DSN env var is applied.
+// TestLoad_DatabaseDSN_FromEnv verifies that DB_* env vars are assembled into a DSN.
 func TestLoad_DatabaseDSN_FromEnv(t *testing.T) {
-	want := "user:pass@tcp(localhost:3306)/0yp?parseTime=true&loc=Local"
-	t.Setenv("DATABASE_DSN", want)
+	t.Setenv("DB_USER", "user")
+	t.Setenv("DB_PASSWORD", "pass")
+	t.Setenv("DB_HOST", "localhost")
+	t.Setenv("DB_PORT", "3306")
+	t.Setenv("DB_NAME", "0yp")
 
+	want := "user:pass@tcp(localhost:3306)/0yp?parseTime=true&loc=Local"
 	cfg, err := config.Load(writeTemp(t, ""))
 	if err != nil {
 		t.Fatalf("Load: %v", err)
@@ -119,9 +123,11 @@ func TestLoad_DatabaseDSN_FromEnv(t *testing.T) {
 	}
 }
 
-// TestLoad_DatabaseDSN_EmptyWithoutEnv verifies that DSN is empty when env var is unset.
+// TestLoad_DatabaseDSN_EmptyWithoutEnv verifies that DSN is empty when DB_* env vars are unset.
 func TestLoad_DatabaseDSN_EmptyWithoutEnv(t *testing.T) {
-	t.Setenv("DATABASE_DSN", "")
+	t.Setenv("DB_USER", "")
+	t.Setenv("DB_HOST", "")
+	t.Setenv("DB_NAME", "")
 
 	cfg, err := config.Load(writeTemp(t, ""))
 	if err != nil {

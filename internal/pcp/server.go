@@ -462,7 +462,9 @@ func checkPort(ip net.IP, port uint16) uint16 {
 func encodeIP(ip net.IP) []byte {
 	if ip4 := ip.To4(); ip4 != nil {
 		b := make([]byte, 4)
-		copy(b, ip4)
+		for i, v := range ip4 {
+			b[3-i] = v
+		}
 		return b
 	}
 	b := make([]byte, 16)

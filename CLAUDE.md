@@ -40,7 +40,7 @@ internal/config/         — TOML config loader
 
 - **Genre `yp` prefix**: channels whose `Genre` does not start with `yp` are not registered to this YP — exclude silently from `Store.AddHit` and `index.txt`. See `docs/protocol/genre.md`.
 - **BCID immutability**: `Store.AddHit` rejects a mismatched `BroadcastID` once one is set (channel ownership check).
-- **IP encoding**: IPv4 → 4 raw bytes; IPv6 → 16 bytes reversed. See `encodeIP`/`decodeIP` in `internal/pcp/`.
+- **IP encoding**: IPv4 → 4 bytes reversed (little-endian); IPv6 → 16 bytes reversed. See `encodeIP`/`decodeIP` in `internal/pcp/` and `decodeIP` in `internal/channel/`.
 - **`index.txt` ordering**: must use `Store.SnapshotOrdered()` (registration order), not `Snapshot()`.
 - **`index.txt` status line**: `yp_name` が設定されている場合、末尾に YP ステータス行を追加（ID=all-zeros、Listeners/Relays=-9、Comment に Uptime）。
 

@@ -623,8 +623,10 @@ func TestHandshake_OlehContents(t *testing.T) {
 	if got["ver"] != uint32(1218) {
 		t.Errorf("ver = %v, want 1218", got["ver"])
 	}
-	wantRIP := []byte{127, 0, 0, 1}
-	if rip, ok := got["rip"].([]byte); !ok || len(rip) != 4 || rip[0] != 127 {
+	// IPv4 is encoded in reversed byte order on the wire (PCP spec).
+	// 127.0.0.1 → [1, 0, 0, 127]
+	wantRIP := []byte{1, 0, 0, 127}
+	if rip, ok := got["rip"].([]byte); !ok || len(rip) != 4 || rip[0] != 1 {
 		t.Errorf("remoteIP = %v, want %v", got["rip"], wantRIP)
 	}
 	if got["port"] != uint16(7144) {
