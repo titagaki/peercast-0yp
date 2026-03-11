@@ -3,8 +3,8 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "${PCP_PORT}:${PCP_PORT}"
-      - "${HTTP_PORT}:${HTTP_PORT}"
+      - "${PCP_PORT}:7144"
+      - "${HTTP_PORT}:80"
     env_file: .env
     environment:
       TZ: Asia/Tokyo
