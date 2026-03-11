@@ -8,11 +8,11 @@ min_client_version = 1200
 [http]
 port = 80
 yp_name = "0yp"
-yp_url  = "http://ik1-423-43594.vs.sakura.ne.jp/"
+yp_url  = "http://yayaue.me/"
 
 # Allowed origins for CORS. Set to the Vite dev server origin when developing locally.
 # In production, leave empty [] — the frontend is served from the same origin and CORS is not needed.
-cors_origins = ["http://localhost:5173"]
+cors_origins = []
 
 # Announcement lines shown above the status line in index.txt (optional, multiple allowed).
 [[http.info]]
