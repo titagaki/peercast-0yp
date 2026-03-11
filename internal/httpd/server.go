@@ -80,6 +80,10 @@ func (s *Server) buildRouter(corsOrigins []string) chi.Router {
 		}))
 	}
 
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+		w.Write(topPageHTML)
+	})
 	r.Get("/yp/api/config", s.handleAPIConfig)
 	r.Get("/yp/api/channels", s.handleAPIChannels)
 	r.Get("/yp/api/channels/activity", s.handleAPIActivity)
