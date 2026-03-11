@@ -30,7 +30,9 @@
 | `port` | int | `80` | HTTP サーバのリッスンポート |
 | `cors_origins` | []string | `[]` | CORS で許可するオリジンのリスト |
 | `yp_name` | string | `""` | YP 名。設定すると `index.txt` 末尾にステータス行を出力 |
-| `yp_url` | string | `""` | ステータス行のリンク先 URL |
+| `yp_url` | string | `""` | ステータス行のリンク先 URL（YP トップページ） |
+| `yp_index_url` | string | `""` | `index.txt` の公開 URL。PeerCast クライアントが参照 |
+| `pcp_address` | string | `""` | PCP サーバのアドレス（`pcp://example.com/` 形式）。フロントエンドの接続案内に使用 |
 
 `cors_origins` は開発時に React の開発サーバからアクセスする際に設定します。
 本番環境では `[]`（空）のまま運用します（same-origin のため CORS 不要）。
@@ -43,39 +45,61 @@
 
 ```toml
 # 開発時の設定例
-cors_origins = ["http://localhost:5173"]
+cors_origins = ["http://localhost:5173"]  # 本番環境では空に設定
 
-# YP ステータス行
-yp_name = "0yp"
-yp_url  = "https://example.com"
+# YP ステータス行・URL
+yp_name      = "0yp"
+yp_url       = "https://example.com/yp/"
+yp_index_url = "https://example.com/yp/index.txt"
+pcp_address  = "pcp://example.com/"
 ```
 
 ---
 
-## `[database]`（環境変数）
+## 環境変数（`.env`）
 
 データベース認証情報は TOML ファイルには書かず、環境変数で設定します。
 `.env` ファイルに記述するか、環境変数として直接設定してください。
+`.env.example` を参考に `.env` を作成してください。
+
+### データベース
 
 | 環境変数 | 説明 |
 |---|---|
 | `DB_USER` | データベースユーザー名 |
 | `DB_PASSWORD` | データベースパスワード |
 | `DB_HOST` | データベースホスト名 |
-| `DB_PORT` | データベースポート（デフォルト: `3306`） |
+| `DB_PORT` | データベースポート（デフォルト: `3306`）。MariaDB の公開ポートにも使用される |
 | `DB_NAME` | データベース名 |
+
+Docker で動かす場合、`DB_HOST` はコンテナ名（`mariadb`）に `docker-compose.yml` 側で上書きされます。
+
+### ポート
+
+| 環境変数 | 説明 |
+|---|---|
+| `PCP_PORT` | ホスト側に公開する PCP ポート（デフォルト: `7144`） |
+| `HTTP_PORT` | ホスト側に公開する HTTP ポート（デフォルト: `80`）。Caddy が受け取る |
+
+### HTTPS（Caddy）
+
+| 環境変数 | 説明 |
+|---|---|
+| `SITE_DOMAIN` | 公開ドメイン名（例: `example.com`）。設定すると Caddy が Let's Encrypt で HTTPS 証明書を自動取得 |
 
 **設定例（`.env`）:**
 
 ```
 DB_USER=app
 DB_PASSWORD=secret
-DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=peercast_yp
-```
 
-Docker で動かす場合、`DB_HOST` はコンテナ名（`mariadb` など）に `docker-compose.yml` 側で上書きされます。
+PCP_PORT=7144
+HTTP_PORT=80
+
+SITE_DOMAIN=example.com
+```
 
 ---
 
@@ -91,9 +115,11 @@ min_client_version = 1200
 
 [http]
 port = 80
-cors_origins = []  # 本番環境では空に設定
-yp_name = "0yp"
-yp_url  = "https://example.com"
+cors_origins = []  # 本番環境では空に設定。開発時: ["http://localhost:5173"]
+yp_name      = "0yp"
+yp_url       = "https://example.com/yp/"
+yp_index_url = "https://example.com/yp/index.txt"
+pcp_address  = "pcp://example.com/"
 
 # Database credentials are read from environment variables (DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME).
 ```

@@ -27,7 +27,8 @@ docker compose restart app
 docker compose down
 ```
 
-PCP サーバが `:7144`、HTTP サーバが `:80` で起動します。
+PCP サーバが `:7144`、HTTP（Caddy）が `:80` で起動します。
+YP は `/yp/` 配下で配信されます（例: `http://example.com/yp/`）。
 
 ### 設定
 
@@ -39,11 +40,15 @@ port = 7144
 
 [http]
 port = 80
-yp_name = "0yp"
-yp_url  = "https://example.com"
+yp_name      = "0yp"
+yp_url       = "https://example.com/yp/"
+yp_index_url = "https://example.com/yp/index.txt"
+pcp_address  = "pcp://example.com/"
 ```
 
-データベース接続情報は `docker-compose.yml` の `DATABASE_DSN` 環境変数で設定します。
+データベース接続情報は `.env` ファイルで設定します。`.env.example` を参考にしてください。
+
+`.env` の `SITE_DOMAIN` に公開ドメインを設定すると、Caddy が Let's Encrypt で HTTPS 証明書を自動取得します。
 
 ### PeerCast クライアントの設定
 
@@ -64,7 +69,7 @@ go vet ./...
 cd web && npm run dev
 ```
 
-`http://localhost:5173` で起動します。APIリクエストは `http://localhost:8080` にプロキシされます。
+`http://localhost:5173/yp/` で起動します。APIリクエストは `http://localhost:8080` にプロキシされます。
 
 ### フロントエンドの変更を反映する
 
