@@ -46,7 +46,12 @@ yp_index_url = "https://example.com/yp/index.txt"
 pcp_address  = "pcp://example.com/"
 ```
 
-データベース接続情報は `.env` ファイルで設定します。`.env.example` を参考にしてください。
+データベース接続情報やポート番号は `.env` ファイルで設定します。
+
+```bash
+cp .env.example .env
+# .env を編集して各値を設定してください
+```
 
 `.env` の `SITE_DOMAIN` に公開ドメインを設定すると、Caddy が Let's Encrypt で HTTPS 証明書を自動取得します。
 
