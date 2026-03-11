@@ -24,15 +24,17 @@ type InfoLine struct {
 
 // Server is the HTTP server for the PeerCast YP.
 type Server struct {
-	store     *channel.Store
-	sessions  *repository.SessionRepo
-	snapshots *repository.SnapshotRepo
-	router    chi.Router
-	srv       *http.Server
-	ypName    string
-	ypURL     string
-	startTime time.Time
-	infoLines []InfoLine
+	store      *channel.Store
+	sessions   *repository.SessionRepo
+	snapshots  *repository.SnapshotRepo
+	router     chi.Router
+	srv        *http.Server
+	ypName     string
+	ypURL      string
+	ypIndexURL string
+	pcpAddress string
+	startTime  time.Time
+	infoLines  []InfoLine
 }
 
 // Config holds HTTP server configuration.
@@ -41,19 +43,23 @@ type Config struct {
 	CORSOrigins []string
 	YPName      string
 	YPURL       string
+	YPIndexURL  string
+	PCPAddress  string
 	InfoLines   []InfoLine
 }
 
 // New creates a Server and registers all routes.
 func New(cfg Config, store *channel.Store, sessions *repository.SessionRepo, snapshots *repository.SnapshotRepo) *Server {
 	s := &Server{
-		store:     store,
-		sessions:  sessions,
-		snapshots: snapshots,
-		ypName:    cfg.YPName,
-		ypURL:     cfg.YPURL,
-		startTime: time.Now(),
-		infoLines: cfg.InfoLines,
+		store:      store,
+		sessions:   sessions,
+		snapshots:  snapshots,
+		ypName:     cfg.YPName,
+		ypURL:      cfg.YPURL,
+		ypIndexURL: cfg.YPIndexURL,
+		pcpAddress: cfg.PCPAddress,
+		startTime:  time.Now(),
+		infoLines:  cfg.InfoLines,
 	}
 	s.router = s.buildRouter(cfg.CORSOrigins)
 	s.srv = &http.Server{Addr: fmt.Sprintf(":%d", cfg.Port), Handler: s.router}
@@ -74,13 +80,14 @@ func (s *Server) buildRouter(corsOrigins []string) chi.Router {
 		}))
 	}
 
-	r.Get("/api/channels", s.handleAPIChannels)
-	r.Get("/api/channels/activity", s.handleAPIActivity)
-	r.Get("/api/channels/timeline", s.handleAPITimeline)
-	r.Get("/api/history", s.handleAPIHistory)
-	r.Get("/index.txt", s.handleIndexTxt)
+	r.Get("/yp/api/config", s.handleAPIConfig)
+	r.Get("/yp/api/channels", s.handleAPIChannels)
+	r.Get("/yp/api/channels/activity", s.handleAPIActivity)
+	r.Get("/yp/api/channels/timeline", s.handleAPITimeline)
+	r.Get("/yp/api/history", s.handleAPIHistory)
+	r.Get("/yp/index.txt", s.handleIndexTxt)
 
-	r.Handle("/*", spaHandler())
+	r.Handle("/yp/*", http.StripPrefix("/yp", spaHandler()))
 
 	return r
 }

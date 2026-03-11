@@ -7,8 +7,10 @@ min_client_version = 1200
 
 [http]
 port = 80
-yp_name = "0yp"
-yp_url  = "http://yayaue.me/"
+yp_name      = "0yp"
+yp_url       = "http://yayaue.me/"
+yp_index_url = "http://yayaue.me/yp/index.txt"  # shown in howto page
+pcp_address  = "pcp://yayaue.me/"               # shown in howto page
 
 # Allowed origins for CORS. Set to the Vite dev server origin when developing locally.
 # In production, leave empty [] — the frontend is served from the same origin and CORS is not needed.

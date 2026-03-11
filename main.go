@@ -91,6 +91,8 @@ func main() {
 		CORSOrigins: cfg.HTTP.CORSOrigins,
 		YPName:      cfg.HTTP.YPName,
 		YPURL:       cfg.HTTP.YPURL,
+		YPIndexURL:  cfg.HTTP.YPIndexURL,
+		PCPAddress:  cfg.HTTP.PCPAddress,
 		InfoLines:   infoLines,
 	}, store, sessions, snapshots)
 

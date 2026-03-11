@@ -1,15 +1,18 @@
-const YP_URL = import.meta.env.VITE_YP_URL as string | undefined
-const PCP_URL = import.meta.env.VITE_PCP_URL as string | undefined
+import { useEffect, useState } from 'react'
+import { api, SiteConfig } from '../api'
 
 function CodeBlock({ value, placeholder }: { value?: string; placeholder: string }) {
   return (
     <div className={`rounded px-4 py-3 font-mono text-xs break-all select-all ${value ? 'bg-gray-100' : 'bg-gray-50 text-gray-400 italic'}`}>
-      {value ?? placeholder}
+      {value || placeholder}
     </div>
   )
 }
 
 export default function HowToPage() {
+  const [config, setConfig] = useState<SiteConfig | null>(null)
+  useEffect(() => { api.config().then(setConfig).catch(() => {}) }, [])
+
   return (
     <div className="max-w-2xl space-y-10 text-sm text-gray-700">
       <h1 className="text-xl font-bold text-gray-900">使い方</h1>
@@ -19,7 +22,7 @@ export default function HowToPage() {
         <p>
           PeerCast の YP（Yellow Page）対応クライアントのチャンネル一覧 URL に以下を登録してください。
         </p>
-        <CodeBlock value={YP_URL} placeholder="（未設定）" />
+        <CodeBlock value={config?.ypIndexURL} placeholder="（未設定）" />
       </section>
 
       <section className="space-y-4">
@@ -27,7 +30,7 @@ export default function HowToPage() {
         <p>
           PeerCastStation の YellowPage 設定の「配信掲載 URL」に以下を登録してください。
         </p>
-        <CodeBlock value={PCP_URL} placeholder="（未設定）" />
+        <CodeBlock value={config?.pcpAddress} placeholder="（未設定）" />
         <div className="space-y-2">
           <p className="font-medium text-gray-800">ジャンルの設定</p>
           <p className="text-gray-600">

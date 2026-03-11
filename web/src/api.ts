@@ -32,6 +32,11 @@ export interface ActivityDay {
   minutes: number
 }
 
+export interface SiteConfig {
+  ypIndexURL: string
+  pcpAddress: string
+}
+
 export interface TimelineRow {
   recordedAt: string
   listeners: number
@@ -53,12 +58,14 @@ async function get<T>(path: string): Promise<T> {
 }
 
 export const api = {
+  config: () =>
+    get<SiteConfig>('/yp/api/config'),
   channels: () =>
-    get<Channel[]>('/api/channels'),
+    get<Channel[]>('/yp/api/channels'),
   history: (limit = 50, offset = 0) =>
-    get<Session[]>(`/api/history?limit=${limit}&offset=${offset}`),
+    get<Session[]>(`/yp/api/history?limit=${limit}&offset=${offset}`),
   activity: (name: string) =>
-    get<ActivityDay[]>(`/api/channels/activity?name=${encodeURIComponent(name)}`),
+    get<ActivityDay[]>(`/yp/api/channels/activity?name=${encodeURIComponent(name)}`),
   timeline: (name: string, date: string) =>
-    get<TimelineRow[]>(`/api/channels/timeline?name=${encodeURIComponent(name)}&date=${date}`),
+    get<TimelineRow[]>(`/yp/api/channels/timeline?name=${encodeURIComponent(name)}&date=${date}`),
 }

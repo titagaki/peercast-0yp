@@ -36,8 +36,10 @@ type InfoLine struct {
 type HTTPConfig struct {
 	Port        int        `toml:"port"`         // default 80
 	CORSOrigins []string   `toml:"cors_origins"`
-	YPName      string     `toml:"yp_name"` // displayed in index.txt status line; omit to disable
-	YPURL       string     `toml:"yp_url"`  // YP website URL for status line
+	YPName      string     `toml:"yp_name"`      // displayed in index.txt status line; omit to disable
+	YPURL       string     `toml:"yp_url"`       // YP website URL for status line
+	YPIndexURL  string     `toml:"yp_index_url"` // index.txt URL shown in howto page
+	PCPAddress  string     `toml:"pcp_address"`  // PCP server address shown in howto page
 	Info        []InfoLine `toml:"info"`    // announcement lines shown at top of index.txt
 }
 

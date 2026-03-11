@@ -4,14 +4,15 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  base: '/yp/',
   build: {
     outDir: '../internal/httpd/dist',
     emptyOutDir: true,
   },
   server: {
     proxy: {
-      '/api': 'http://localhost:8080',
-      '/index.txt': 'http://localhost:8080',
+      '/yp/api': 'http://localhost:8080',
+      '/yp/index.txt': 'http://localhost:8080',
     },
   },
 })

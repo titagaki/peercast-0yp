@@ -1,4 +1,22 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/www:/srv/www:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN}
+    depends_on:
+      - app
+    container_name: peercast-0yp-caddy
+
   app:
     build: .
     restart: unless-stopped
@@ -41,3 +59,5 @@ services:
 
 volumes:
   mariadb_data:
+  caddy_data:
+  caddy_config:
