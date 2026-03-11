@@ -35,5 +35,6 @@ CREATE TABLE IF NOT EXISTS channel_snapshots (
     track_album      VARCHAR(255)      NOT NULL DEFAULT '',
 
     PRIMARY KEY (id),
-    INDEX idx_session_time (session_id, recorded_at)
+    INDEX idx_session_time (session_id, recorded_at),
+    UNIQUE INDEX idx_recorded_at_name (recorded_at, name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -30,6 +30,10 @@ export default function ChannelListPage() {
   if (error) return <p className="text-red-500 text-base font-mono">{error}</p>
   if (channels.length === 0) return (
     <div>
+      <div className="mb-8">
+        <p className="text-5xl font-black text-gray-900 tracking-tight">令和のYP 0yp</p>
+        <p className="text-[1.8rem] text-gray-400 font-mono mt-1">れいわいぴー</p>
+      </div>
       <p className="text-gray-400 text-base font-mono">現在放送中のチャンネルはありません。</p>
       <div className="mt-6">
         <Link to="/history" className="inline-flex items-center gap-2 border border-gray-900 px-4 py-2 font-mono text-sm font-bold text-gray-900 hover:bg-gray-900 hover:text-white transition-colors">

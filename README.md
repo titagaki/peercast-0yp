@@ -58,6 +58,24 @@ go test ./...
 go vet ./...
 ```
 
+### フロントエンドの開発サーバ
+
+```bash
+cd web && npm run dev
+```
+
+`http://localhost:5173` で起動します。APIリクエストは `http://localhost:8080` にプロキシされます。
+
+### フロントエンドの変更を反映する
+
+フロントエンド（`web/`）は `go:embed` でGoバイナリに埋め込まれます。
+変更を反映するにはフロントエンドをビルドしてからDockerイメージを再ビルドしてください。
+
+```bash
+cd web && npm run build && cd ..
+docker compose build app && docker compose up -d app
+```
+
 ## ドキュメント
 
 → [docs/index.md](docs/index.md)
