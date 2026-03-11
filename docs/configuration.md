@@ -55,27 +55,27 @@ yp_url  = "https://example.com"
 ## `[database]`（環境変数）
 
 データベース認証情報は TOML ファイルには書かず、環境変数で設定します。
-環境変数は TOML の値より優先されます。
+`.env` ファイルに記述するか、環境変数として直接設定してください。
 
 | 環境変数 | 説明 |
 |---|---|
-| `DATABASE_DSN` | MySQL 接続 DSN 文字列 |
+| `DB_USER` | データベースユーザー名 |
+| `DB_PASSWORD` | データベースパスワード |
+| `DB_HOST` | データベースホスト名 |
+| `DB_PORT` | データベースポート（デフォルト: `3306`） |
+| `DB_NAME` | データベース名 |
 
-**DSN フォーマット:**
+**設定例（`.env`）:**
 
 ```
-user:pass@tcp(host:port)/dbname?parseTime=true&loc=Local
+DB_USER=app
+DB_PASSWORD=secret
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=peercast_yp
 ```
 
-**設定例:**
-
-```bash
-export DATABASE_DSN="peercast:secret@tcp(localhost:3306)/peercast0yp?parseTime=true&loc=Local"
-```
-
-> `parseTime=true` と `loc=Local` は必須です。
-> `loc=Local` を省略すると DATETIME カラムが UTC として解釈され、
-> JST 保存のスキーマと時刻がずれます。
+Docker で動かす場合、`DB_HOST` はコンテナ名（`mariadb` など）に `docker-compose.yml` 側で上書きされます。
 
 ---
 
@@ -83,17 +83,17 @@ export DATABASE_DSN="peercast:secret@tcp(localhost:3306)/peercast0yp?parseTime=t
 
 ```toml
 [pcp]
-port = 7145
+port = 7144
 max_connections = 100
 update_interval = 120  # seconds
 hit_timeout = 180      # seconds
 min_client_version = 1200
 
 [http]
-port = 8080
+port = 80
 cors_origins = []  # 本番環境では空に設定
 yp_name = "0yp"
 yp_url  = "https://example.com"
 
-# Database credentials are read from the DATABASE_DSN environment variable.
+# Database credentials are read from environment variables (DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME).
 ```

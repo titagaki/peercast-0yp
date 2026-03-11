@@ -3,6 +3,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/BurntSushi/toml"
@@ -43,8 +44,8 @@ type HTTPConfig struct {
 // DatabaseConfig holds database connection parameters.
 // These are populated from environment variables, not the TOML file.
 type DatabaseConfig struct {
-	// DSN is read from the DATABASE_DSN environment variable.
-	// Format: "user:pass@tcp(host:port)/dbname?parseTime=true&loc=Local"
+	// DSN is constructed from DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME.
+	// DB_PORT defaults to 3306 if unset.
 	DSN string
 }
 
@@ -84,7 +85,15 @@ func applyDefaults(c *Config) {
 // applyEnv overlays environment variables onto the config.
 // Environment variables take precedence over TOML values.
 func applyEnv(c *Config) {
-	if v := os.Getenv("DATABASE_DSN"); v != "" {
-		c.Database.DSN = v
+	user := os.Getenv("DB_USER")
+	pass := os.Getenv("DB_PASSWORD")
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	name := os.Getenv("DB_NAME")
+	if port == "" {
+		port = "3306"
+	}
+	if user != "" && host != "" && name != "" {
+		c.Database.DSN = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&loc=Local", user, pass, host, port, name)
 	}
 }

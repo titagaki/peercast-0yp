@@ -27,7 +27,7 @@ docker compose restart app
 docker compose down
 ```
 
-PCP サーバが `:7145`、HTTP サーバが `:8080` で起動します。
+PCP サーバが `:7144`、HTTP サーバが `:80` で起動します。
 
 ### 設定
 
@@ -35,10 +35,10 @@ PCP サーバが `:7145`、HTTP サーバが `:8080` で起動します。
 
 ```toml
 [pcp]
-port = 7145
+port = 7144
 
 [http]
-port = 8080
+port = 80
 yp_name = "0yp"
 yp_url  = "https://example.com"
 ```
@@ -48,7 +48,7 @@ yp_url  = "https://example.com"
 ### PeerCast クライアントの設定
 
 PeerCast の設定画面で「Root Server」（ルートサーバ / YP アドレス）に
-このサーバのホスト名を設定してください。デフォルトポートは 7145 です。
+このサーバのホスト名を設定してください。デフォルトポートは 7144 です。
 
 ## 開発
 

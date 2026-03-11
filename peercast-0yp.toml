@@ -1,15 +1,18 @@
 [pcp]
-port = 7145
+port = 7144
 max_connections = 100
 update_interval = 120  # seconds
 hit_timeout = 180      # seconds
 min_client_version = 1200
 
 [http]
-port = 8080
-cors_origins = ["http://localhost:5173"]
+port = 80
 yp_name = "0yp"
-yp_url  = "http://localhost:8080/"
+yp_url  = "http://ik1-423-43594.vs.sakura.ne.jp/"
+
+# Allowed origins for CORS. Set to the Vite dev server origin when developing locally.
+# In production, leave empty [] — the frontend is served from the same origin and CORS is not needed.
+cors_origins = ["http://localhost:5173"]
 
 # Announcement lines shown above the status line in index.txt (optional, multiple allowed).
 [[http.info]]
@@ -22,5 +25,4 @@ url     = ""
 # comment = "違法コンテンツの配信は禁止です。"
 # url     = "https://example.com/rules"
 
-# Database credentials are read from the DATABASE_DSN environment variable.
-# See .env.example
+# Database credentials are read from environment variables. See .env.example
