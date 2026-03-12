@@ -1,4 +1,8 @@
 {$SITE_DOMAIN} {
+    handle /yp {
+        redir /yp/ 301
+    }
+
     handle /yp/* {
         reverse_proxy app:80
     }
