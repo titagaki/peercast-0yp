@@ -17,11 +17,23 @@ go vet ./...
 
 ## Docker
 
+compose ファイルは環境別に分かれている：
+- `docker-compose.yml` — 共通（caddy + app）
+- `docker-compose.dev.yml` — 開発追加分（mariadb コンテナ）
+- `docker-compose.prod.yml` — 本番追加分（外部 mysqld への接続設定）
+
 ```bash
-docker compose up -d          # 起動
-docker compose restart app    # 再起動
-docker compose logs -f app    # ログ
-docker compose down           # 停止
+# 開発
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml restart app
+docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f app
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+
+# 本番
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.prod.yml restart app
+docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f app
+docker compose -f docker-compose.yml -f docker-compose.prod.yml down
 ```
 
 ## Code Structure

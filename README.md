@@ -14,17 +14,20 @@ PCP（PeerCast Protocol）バイナリプロトコルでクライアントから
 ## クイックスタート
 
 ```bash
-# 起動
-docker compose up -d
+# 起動（開発: MariaDB コンテナを含む）
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# 起動（本番: ホストの mysqld に接続）
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 # ログ確認
-docker compose logs -f app
+docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f app
 
 # 再起動（設定変更後など）
-docker compose restart app
+docker compose -f docker-compose.yml -f docker-compose.dev.yml restart app
 
 # 停止
-docker compose down
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```
 
 PCP サーバが `:7144`、HTTP（Caddy）が `:80` で起動します。
@@ -83,7 +86,8 @@ cd web && npm run dev
 
 ```bash
 cd web && npm run build && cd ..
-docker compose build app && docker compose up -d app
+docker compose -f docker-compose.yml -f docker-compose.dev.yml build app
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d app
 ```
 
 ## ドキュメント

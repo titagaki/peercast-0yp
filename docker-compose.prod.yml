@@ -1,0 +1,6 @@
+services:
+  app:
+    environment:
+      DB_HOST: host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
