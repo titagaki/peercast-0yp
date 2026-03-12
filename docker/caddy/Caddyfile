@@ -1,5 +1,6 @@
 {$SITE_DOMAIN} {
-    handle /yp/* {
+    @yp path /yp /yp/*
+    handle @yp {
         reverse_proxy app:80
     }
 
