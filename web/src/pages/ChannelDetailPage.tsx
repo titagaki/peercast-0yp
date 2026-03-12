@@ -7,22 +7,14 @@ function todayYYYYMMDD(): string {
   return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
 }
 
-function toYYYYMMDD(d: Date): string {
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
-}
-
 function MonthCalendar({ activityMap, selected, onSelect }: {
   activityMap: Map<string, number>
   selected: string
   onSelect: (date: string) => void
 }) {
   const today = new Date()
-  const [year, setYear] = useState(
-    parseInt(selected.slice(0, 4)),
-  )
-  const [month, setMonth] = useState(
-    parseInt(selected.slice(4, 6)) - 1,
-  )
+  const [year, setYear] = useState(parseInt(selected.slice(0, 4)))
+  const [month, setMonth] = useState(parseInt(selected.slice(4, 6)) - 1)
 
   const prevMonth = () => { if (month === 0) { setYear(y => y - 1); setMonth(11) } else setMonth(m => m - 1) }
   const nextMonth = () => { if (month === 11) { setYear(y => y + 1); setMonth(0) } else setMonth(m => m + 1) }
@@ -32,15 +24,15 @@ function MonthCalendar({ activityMap, selected, onSelect }: {
   const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)]
 
   return (
-    <div className="border border-gray-900 w-56">
-      <div className="flex items-center justify-between px-2 py-1 border-b border-gray-900 bg-gray-50">
-        <button onClick={prevMonth} className="font-mono text-base px-1 hover:bg-gray-200">←</button>
-        <span className="font-mono text-base font-bold">{year}/{String(month + 1).padStart(2, '0')}</span>
-        <button onClick={nextMonth} className="font-mono text-base px-1 hover:bg-gray-200">→</button>
+    <div className="border border-washi-header w-56">
+      <div className="flex items-center justify-between px-2 py-1.5 border-b border-washi-border bg-washi-surface">
+        <button onClick={prevMonth} className="font-mono text-sm px-2 py-0.5 hover:bg-washi-border transition-colors">←</button>
+        <span className="font-mono text-sm font-bold">{year}/{String(month + 1).padStart(2, '0')}</span>
+        <button onClick={nextMonth} className="font-mono text-sm px-2 py-0.5 hover:bg-washi-border transition-colors">→</button>
       </div>
       <div className="grid grid-cols-7 text-center">
         {['日','月','火','水','木','金','土'].map(d => (
-          <div key={d} className="font-mono text-base text-gray-400 py-0.5">{d}</div>
+          <div key={d} className="text-xs text-washi-muted py-1">{d}</div>
         ))}
         {cells.map((day, i) => {
           if (!day) return <div key={i} />
@@ -53,10 +45,10 @@ function MonthCalendar({ activityMap, selected, onSelect }: {
               key={i}
               disabled={!hasActivity || isFuture}
               onClick={() => onSelect(dateStr)}
-              className={`font-mono text-base py-1 transition-colors
-                ${isSelected ? 'bg-gray-900 text-white' : ''}
+              className={`font-mono text-xs py-1 transition-colors
+                ${isSelected ? 'bg-washi-header text-white' : ''}
                 ${!isSelected && hasActivity ? 'bg-green-100 hover:bg-green-300 cursor-pointer font-bold' : ''}
-                ${!hasActivity || isFuture ? 'text-gray-300 cursor-default' : 'text-gray-900'}
+                ${!hasActivity || isFuture ? 'text-washi-border cursor-default' : 'text-washi-text'}
               `}
             >
               {day}
@@ -72,7 +64,6 @@ function ActivityHeatmap({ data, onDateClick }: { data: ActivityDay[]; onDateCli
   const map = new Map(data.map(d => [d.date, d.minutes]))
   const maxMin = Math.max(...Array.from(map.values()), 1)
 
-  // Build 365 days ending today
   const today = new Date()
   const days: { date: string; minutes: number }[] = []
   for (let i = 364; i >= 0; i--) {
@@ -82,14 +73,13 @@ function ActivityHeatmap({ data, onDateClick }: { data: ActivityDay[]; onDateCli
     days.push({ date: key, minutes: map.get(key) ?? 0 })
   }
 
-  // Group into columns of 7 (weeks)
   const weeks: typeof days[] = []
   for (let i = 0; i < days.length; i += 7) {
     weeks.push(days.slice(i, i + 7))
   }
 
   function cellColor(minutes: number): string {
-    if (minutes === 0) return 'bg-gray-100'
+    if (minutes === 0) return 'bg-washi-surface'
     const ratio = minutes / maxMin
     if (ratio < 0.25) return 'bg-green-200'
     if (ratio < 0.5) return 'bg-green-400'
@@ -106,7 +96,7 @@ function ActivityHeatmap({ data, onDateClick }: { data: ActivityDay[]; onDateCli
               key={day.date}
               title={`${day.date}  ${day.minutes}分`}
               onClick={() => day.minutes > 0 && onDateClick(day.date.replace(/-/g, ''))}
-              className={`aspect-square rounded-sm ${cellColor(day.minutes)} ${day.minutes > 0 ? 'cursor-pointer hover:ring-1 hover:ring-gray-900' : ''}`}
+              className={`aspect-square rounded-sm ${cellColor(day.minutes)} ${day.minutes > 0 ? 'cursor-pointer hover:ring-1 hover:ring-washi-header' : ''}`}
             />
           ))}
         </div>
@@ -143,7 +133,6 @@ export default function ChannelDetailPage() {
     return new Date(iso).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
   }
 
-  // Only show detail text on changed rows
   const rows = timeline.map(row => ({
     ...row,
     detail: row.changed ? [row.genre, row.trackTitle || row.description].filter(Boolean).join(' / ') : '',
@@ -151,40 +140,38 @@ export default function ChannelDetailPage() {
 
   return (
     <div className="space-y-8">
-      <div className="border-b-2 border-gray-900 pb-2">
-        <h1 className="font-black text-gray-900 text-xl tracking-tight">{channelName}</h1>
+      <div className="border-b-2 border-washi-header pb-3">
+        <h1 className="font-black text-washi-text text-xl tracking-tight">{channelName}</h1>
       </div>
 
       <section>
-        <div className="border-b-2 border-gray-900 pb-3 mb-3 space-y-2">
-          <h2 className="font-mono text-xl uppercase tracking-widest text-gray-900 font-bold">
-            Timeline
-          </h2>
+        <div className="border-b-2 border-washi-header pb-3 mb-4 space-y-3">
+          <h2 className="font-black text-xl uppercase tracking-tight text-washi-text">Timeline</h2>
           <MonthCalendar activityMap={activityMap} selected={date} onSelect={setDate} />
         </div>
 
         {loadingTimeline ? (
-          <p className="text-gray-400 text-xl font-mono">loading...</p>
+          <p className="text-washi-muted text-base">読み込み中...</p>
         ) : rows.length === 0 ? (
-          <p className="text-gray-400 text-xl font-mono">データがありません。</p>
+          <p className="text-washi-muted text-base">データがありません。</p>
         ) : (
-          <table className="w-full text-xl border border-gray-900">
+          <table className="w-full border border-washi-border">
             <thead>
-              <tr className="text-left border-b-2 border-gray-900 bg-gray-50">
-                <th className="py-2 px-3 font-mono text-base uppercase tracking-wider text-gray-600">時刻</th>
-                <th className="py-2 px-3 font-mono text-base uppercase tracking-wider text-gray-600">リスナー/リレー</th>
-                <th className="py-2 px-3 font-mono text-base uppercase tracking-wider text-gray-600">詳細</th>
+              <tr className="text-left border-b-2 border-washi-header bg-washi-surface">
+                <th className="py-2 px-4 text-xs font-bold uppercase tracking-wider text-washi-muted">時刻</th>
+                <th className="py-2 px-4 text-xs font-bold uppercase tracking-wider text-washi-muted">リスナー/リレー</th>
+                <th className="py-2 px-4 text-xs font-bold uppercase tracking-wider text-washi-muted">詳細</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-washi-border">
               {rows.map((row, i) => (
                 <tr
                   key={i}
-                  className={`hover:bg-gray-50 transition-colors ${row.changed ? '' : 'opacity-40'}`}
+                  className={`hover:bg-washi-surface transition-colors ${row.changed ? '' : 'opacity-40'}`}
                 >
-                  <td className="py-1.5 px-3 font-mono text-base tabular-nums">{fmtTime(row.recordedAt)}</td>
-                  <td className="py-1.5 px-3 font-mono text-base tabular-nums">{row.listeners}/{row.relays}</td>
-                  <td className="py-1.5 px-3 text-base text-gray-700">{row.detail}</td>
+                  <td className="py-2 px-4 font-mono text-sm tabular-nums">{fmtTime(row.recordedAt)}</td>
+                  <td className="py-2 px-4 font-mono text-sm tabular-nums">{row.listeners}/{row.relays}</td>
+                  <td className="py-2 px-4 text-sm text-washi-text">{row.detail}</td>
                 </tr>
               ))}
             </tbody>
@@ -193,7 +180,7 @@ export default function ChannelDetailPage() {
       </section>
 
       <section>
-        <h2 className="font-mono text-xl uppercase tracking-widest text-gray-500 mb-3">
+        <h2 className="font-bold text-sm uppercase tracking-wider text-washi-muted mb-3">
           過去365日の放送
         </h2>
         <ActivityHeatmap data={activity} onDateClick={setDate} />

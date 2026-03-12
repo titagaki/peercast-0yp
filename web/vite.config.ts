@@ -11,8 +11,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/yp/api': 'http://localhost:8080',
-      '/yp/index.txt': 'http://localhost:8080',
+      '/yp/api': { target: 'https://localhost', secure: false },
+      '/yp/index.txt': { target: 'https://localhost', secure: false },
     },
   },
 })

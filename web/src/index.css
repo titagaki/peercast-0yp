@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Noto Sans JP', ui-sans-serif, system-ui, sans-serif;
+  --color-washi-bg: #F7F3EE;
+  --color-washi-surface: #EFEAD9;
+  --color-washi-border: #D4C5A9;
+  --color-washi-accent: #B5515D;
+  --color-washi-accent-sub: #E8A598;
+  --color-washi-text: #2C2420;
+  --color-washi-muted: #7A6A5A;
+  --color-washi-header: #3D2B1F;
+}

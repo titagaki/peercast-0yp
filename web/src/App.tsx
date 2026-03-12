@@ -17,15 +17,15 @@ function Nav() {
   const link = (to: string, label: string) => (
     <Link
       to={to}
-      className={`text-base font-mono uppercase tracking-widest px-1 py-0.5 ${pathname === to ? 'text-gray-900 border-b-2 border-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+      className={`text-sm font-medium px-2 py-1 transition-colors ${pathname === to ? 'text-white border-b border-white' : 'text-washi-accent-sub hover:text-white'}`}
     >
       {label}
     </Link>
   )
   return (
-    <nav className="bg-white border-b-2 border-gray-900 py-3">
+    <nav className="bg-washi-header py-3">
       <div className="max-w-4xl mx-auto px-4 flex items-center gap-6">
-        <Link to="/" className="font-black text-gray-900 tracking-tighter text-xl">0yp</Link>
+        <Link to="/" className="font-black text-white tracking-tighter text-xl">0yp</Link>
         {link('/howto', '使い方')}
         {link('/terms', '利用規約')}
       </div>
@@ -35,7 +35,7 @@ function Nav() {
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-washi-bg">
       <Nav />
       <main className="max-w-4xl mx-auto px-4 py-8">{children}</main>
     </div>

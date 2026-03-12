@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, Session } from '../api'
 
-const LIMIT = 200  // 7日分を一括取得（サーバー側で7日に絞っているため上限不要）
+const LIMIT = 200
 
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleString('ja-JP', {
@@ -30,39 +30,39 @@ export default function HistoryPage() {
 
   return (
     <div>
-      <div className="flex items-baseline gap-3 mb-4 border-b-2 border-gray-900 pb-2">
-        <h1 className="font-black text-gray-900 uppercase tracking-tight text-xl">History</h1>
+      <div className="flex items-baseline gap-3 mb-4 border-b-2 border-washi-header pb-3">
+        <h1 className="font-black text-washi-text uppercase tracking-tight text-xl">History</h1>
       </div>
 
       {loading ? (
-        <p className="text-gray-400 text-xl font-mono">loading...</p>
+        <p className="text-washi-muted text-base">読み込み中...</p>
       ) : (
-        <table className="w-full text-xl border border-gray-900">
+        <table className="w-full border border-washi-border">
           <thead>
-            <tr className="text-left border-b-2 border-gray-900 bg-gray-50">
-              <th className="py-2 px-3 font-mono text-base uppercase tracking-wider text-gray-600">チャンネル</th>
-              <th className="py-2 px-3 font-mono text-base uppercase tracking-wider text-gray-600">開始</th>
-              <th className="py-2 px-3 font-mono text-base uppercase tracking-wider text-gray-600">時間</th>
+            <tr className="text-left border-b-2 border-washi-header bg-washi-surface">
+              <th className="py-2 px-4 text-xs font-bold uppercase tracking-wider text-washi-muted">チャンネル</th>
+              <th className="py-2 px-4 text-xs font-bold uppercase tracking-wider text-washi-muted">開始</th>
+              <th className="py-2 px-4 text-xs font-bold uppercase tracking-wider text-washi-muted">時間</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-washi-border">
             {sessions.map(s => (
-              <tr key={s.id} className="hover:bg-gray-50 transition-colors">
-                <td className="py-2 px-3">
+              <tr key={s.id} className="hover:bg-washi-surface transition-colors">
+                <td className="py-2.5 px-4">
                   <Link
                     to={`/channels/${encodeURIComponent(s.channelName)}`}
-                    className="font-bold text-gray-900 hover:underline underline-offset-2"
+                    className="font-bold text-washi-accent hover:underline underline-offset-2"
                   >
                     {s.channelName}
                   </Link>
                   {s.genre && (
-                    <span className="ml-2 text-base text-gray-400 font-mono">{s.genre}</span>
+                    <span className="ml-2 text-sm text-washi-muted">{s.genre}</span>
                   )}
                 </td>
-                <td className="py-2 px-3 font-mono text-base text-gray-500 tabular-nums whitespace-nowrap">
+                <td className="py-2.5 px-4 font-mono text-sm text-washi-muted tabular-nums whitespace-nowrap">
                   {fmtDate(s.startedAt)}
                 </td>
-                <td className="py-2 px-3 font-mono text-base tabular-nums">
+                <td className="py-2.5 px-4 font-mono text-sm tabular-nums">
                   {fmtDuration(s.durationMin)}
                 </td>
               </tr>
