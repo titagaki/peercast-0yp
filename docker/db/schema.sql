@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS channel_sessions (
 CREATE TABLE IF NOT EXISTS channel_snapshots (
     id               BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
     session_id       BIGINT UNSIGNED   NOT NULL,  -- channel_sessions.id
-    channel_id       BINARY(16)        NOT NULL,  -- 履歴参照用
+    channel_id       CHAR(32)          NOT NULL DEFAULT '',  -- 履歴参照用（hex文字列）
     recorded_at      DATETIME          NOT NULL,
     listeners        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     relays           SMALLINT UNSIGNED NOT NULL DEFAULT 0,

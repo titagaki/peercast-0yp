@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/hex"
 	"strings"
 	"time"
 
@@ -71,7 +72,7 @@ func (r *SnapshotRepo) Insert(ctx context.Context, sessionID int64, s channel.Ch
 			track_contact    = VALUES(track_contact),
 			track_album      = VALUES(track_album)`,
 		sessionID,
-		s.Info.ID[:],
+		hex.EncodeToString(s.Info.ID[:]),
 		t,
 		s.Listeners,
 		s.Relays,
