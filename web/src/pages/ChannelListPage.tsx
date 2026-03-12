@@ -28,12 +28,19 @@ export default function ChannelListPage() {
 
   if (loading) return <p className="text-washi-muted text-base">読み込み中...</p>
   if (error) return <p className="text-red-500 text-base">{error}</p>
-  if (channels.length === 0) return (
-    <div>
-      <div className="mb-8">
+  const hero = (
+    <div className="mb-8 flex items-center gap-6">
+      <img src="/yp/logo.jpeg" alt="0yp" className="h-40 w-auto rounded-xl" />
+      <div>
         <p className="text-5xl font-black text-washi-text tracking-tight">令和のYP 0yp</p>
         <p className="text-2xl text-washi-muted mt-1">れいわいぴー</p>
       </div>
+    </div>
+  )
+
+  if (channels.length === 0) return (
+    <div>
+      {hero}
       <p className="text-washi-muted text-base">現在放送中のチャンネルはありません。</p>
       <div className="mt-6">
         <Link to="/history" className="inline-flex items-center gap-2 border border-washi-accent px-4 py-2 text-sm font-bold text-washi-accent hover:bg-washi-accent hover:text-white transition-colors">
@@ -46,10 +53,7 @@ export default function ChannelListPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <p className="text-5xl font-black text-washi-text tracking-tight">令和のYP 0yp</p>
-        <p className="text-2xl text-washi-muted mt-1">れいわいぴー</p>
-      </div>
+      {hero}
       <div className="flex items-baseline gap-3 mb-4 border-b-2 border-washi-header pb-3">
         <h1 className="font-black text-washi-text uppercase tracking-tight text-xl">Live</h1>
         <span className="font-mono text-sm text-washi-muted">{channels.length} ch</span>
