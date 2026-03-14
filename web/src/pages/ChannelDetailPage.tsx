@@ -7,6 +7,13 @@ function todayYYYYMMDD(): string {
   return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
 }
 
+function formatDateDisplay(yyyymmdd: string): string {
+  const y = yyyymmdd.slice(0, 4)
+  const m = parseInt(yyyymmdd.slice(4, 6))
+  const d = parseInt(yyyymmdd.slice(6, 8))
+  return `${y}年${m}月${d}日`
+}
+
 function MonthCalendar({ activityMap, selected, onSelect }: {
   activityMap: Map<string, number>
   selected: string
@@ -153,7 +160,18 @@ export default function ChannelDetailPage() {
 
       <section>
         <div className="border-b-2 border-washi-header pb-3 mb-4 space-y-3">
-          <h2 className="font-black text-xl uppercase tracking-tight text-washi-text">Timeline</h2>
+          <div className="flex items-baseline gap-3 flex-wrap">
+            <h2 className="font-black text-xl uppercase tracking-tight text-washi-text">Timeline</h2>
+            <span className="font-mono text-base font-bold text-washi-header">{formatDateDisplay(date)}</span>
+            {date !== todayYYYYMMDD() && (
+              <button
+                onClick={() => setDate(todayYYYYMMDD())}
+                className="font-mono text-xs px-2 py-0.5 border border-washi-header text-washi-header hover:bg-washi-header hover:text-white transition-colors"
+              >
+                今日
+              </button>
+            )}
+          </div>
           <MonthCalendar activityMap={activityMap} selected={date} onSelect={setDate} />
         </div>
 
@@ -188,7 +206,7 @@ export default function ChannelDetailPage() {
 
       <section>
         <h2 className="font-bold text-sm uppercase tracking-wider text-washi-muted mb-3">
-          過去365日の放送
+          過去365日の配信
         </h2>
         <ActivityHeatmap data={activity} onDateClick={setDate} />
       </section>

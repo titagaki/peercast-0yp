@@ -62,7 +62,7 @@ export default function ChannelListPage() {
   if (channels.length === 0) return (
     <div>
       {hero}
-      <p className="text-washi-muted text-base">現在放送中のチャンネルはありません。</p>
+      <p className="text-washi-muted text-base">現在配信中のチャンネルはありません。</p>
       <div className="mt-6">
         <Link to="/history" className="inline-flex items-center gap-2 border border-washi-accent px-4 py-2 text-sm font-bold text-washi-accent hover:bg-washi-accent hover:text-white transition-colors">
           <History size={16} />
