@@ -4,7 +4,7 @@ import { api, SiteConfig } from '../api'
 
 function CodeBlock({ value, placeholder }: { value?: string; placeholder: string }) {
   return (
-    <div className={`rounded px-4 py-3 font-mono text-sm break-all select-all ${value ? 'bg-washi-surface' : 'bg-washi-bg text-washi-muted italic'}`}>
+    <div className={`rounded border border-washi-border px-4 py-3 font-mono text-sm break-all select-all ${value ? 'text-washi-text' : 'text-washi-muted italic'}`}>
       {value || placeholder}
     </div>
   )
