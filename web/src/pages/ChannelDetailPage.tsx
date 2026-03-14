@@ -115,8 +115,8 @@ export default function ChannelDetailPage() {
   const { name } = useParams<{ name: string }>()
   const channelName = decodeURIComponent(name ?? '')
 
-  const today = todayYYYYMMDD()
-  const [date, setDate] = useState(today)
+  const todayStr = todayYYYYMMDD()
+  const [date, setDate] = useState(todayStr)
   const [activity, setActivity] = useState<ActivityDay[]>([])
   const activityMap = new Map(activity.map(d => [d.date, d.minutes]))
   const [timeline, setTimeline] = useState<TimelineRow[]>([])
@@ -163,12 +163,12 @@ export default function ChannelDetailPage() {
           <div className="flex items-baseline gap-3 flex-wrap">
             <h2 className="font-black text-xl uppercase tracking-tight text-washi-text">Timeline</h2>
             <span className="font-mono text-base font-bold text-washi-header">{formatDateDisplay(date)}</span>
-            {date !== today && (
+            {date !== todayStr && (
               <button
-                onClick={() => setDate(today)}
+                onClick={() => setDate(todayStr)}
                 className="font-mono text-xs px-2 py-0.5 border border-washi-header text-washi-header hover:bg-washi-header hover:text-white transition-colors"
               >
-                今日
+                今日に戻る
               </button>
             )}
           </div>
