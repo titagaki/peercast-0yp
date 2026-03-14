@@ -37,7 +37,10 @@ export default function HowToPage() {
               <td className="py-2 px-4 font-mono text-sm break-all select-all">{config?.ypIndexURL || '（未設定）'}</td>
             </tr>
             <tr>
-              <td className="py-2 px-4 text-sm">PeCaRecorder / pcypLite</td>
+              <td className="py-2 px-4 text-sm">
+                PeCaRecorder / pcypLite
+                <div className="text-xs text-washi-muted font-sans mt-0.5">※ PeCaRecorder は https 非対応です。http で設定してください。</div>
+              </td>
               <td className="py-2 px-4 font-mono text-sm break-all select-all">
                 {config?.ypIndexURL ? config.ypIndexURL.replace(/\/index\.txt$/, '/') : '（未設定）'}
               </td>
