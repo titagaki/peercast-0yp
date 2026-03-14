@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom'
 import { api, ActivityDay, Channel, TimelineRow } from '../api'
 
 function todayYYYYMMDD(): string {
-  const d = new Date()
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+  // sv-SE locale produces YYYY-MM-DD; use Asia/Tokyo to avoid UTC date shift
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }).replace(/-/g, '')
 }
 
 function formatDateDisplay(yyyymmdd: string): string {
@@ -19,7 +19,8 @@ function MonthCalendar({ activityMap, selected, onSelect }: {
   selected: string
   onSelect: (date: string) => void
 }) {
-  const today = new Date()
+  const todayStr = todayYYYYMMDD()
+  const today = new Date(todayStr.slice(0,4) + '-' + todayStr.slice(4,6) + '-' + todayStr.slice(6,8) + 'T00:00:00+09:00')
   const [year, setYear] = useState(parseInt(selected.slice(0, 4)))
   const [month, setMonth] = useState(parseInt(selected.slice(4, 6)) - 1)
 
@@ -71,12 +72,13 @@ function ActivityHeatmap({ data, onDateClick }: { data: ActivityDay[]; onDateCli
   const map = new Map(data.map(d => [d.date, d.minutes]))
   const maxMin = Math.max(...Array.from(map.values()), 1)
 
-  const today = new Date()
+  const todayStr = todayYYYYMMDD()
+  const today = new Date(todayStr.slice(0,4) + '-' + todayStr.slice(4,6) + '-' + todayStr.slice(6,8) + 'T00:00:00+09:00')
   const days: { date: string; minutes: number }[] = []
   for (let i = 364; i >= 0; i--) {
     const d = new Date(today)
     d.setDate(d.getDate() - i)
-    const key = d.toISOString().slice(0, 10)
+    const key = d.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' })
     days.push({ date: key, minutes: map.get(key) ?? 0 })
   }
 
