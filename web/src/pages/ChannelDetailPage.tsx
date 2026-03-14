@@ -20,7 +20,6 @@ function MonthCalendar({ activityMap, selected, onSelect }: {
   onSelect: (date: string) => void
 }) {
   const todayStr = todayYYYYMMDD()
-  const today = new Date(todayStr.slice(0,4) + '-' + todayStr.slice(4,6) + '-' + todayStr.slice(6,8) + 'T00:00:00+09:00')
   const [year, setYear] = useState(parseInt(selected.slice(0, 4)))
   const [month, setMonth] = useState(parseInt(selected.slice(4, 6)) - 1)
 
@@ -47,7 +46,7 @@ function MonthCalendar({ activityMap, selected, onSelect }: {
           const dateStr = `${year}${String(month + 1).padStart(2, '0')}${String(day).padStart(2, '0')}`
           const hasActivity = (activityMap.get(dateStr.slice(0,4) + '-' + dateStr.slice(4,6) + '-' + dateStr.slice(6,8)) ?? 0) > 0
           const isSelected = dateStr === selected
-          const isFuture = new Date(year, month, day) > today
+          const isFuture = dateStr > todayStr
           return (
             <button
               key={i}
@@ -73,12 +72,10 @@ function ActivityHeatmap({ data, onDateClick }: { data: ActivityDay[]; onDateCli
   const maxMin = Math.max(...Array.from(map.values()), 1)
 
   const todayStr = todayYYYYMMDD()
-  const today = new Date(todayStr.slice(0,4) + '-' + todayStr.slice(4,6) + '-' + todayStr.slice(6,8) + 'T00:00:00+09:00')
   const days: { date: string; minutes: number }[] = []
   for (let i = 364; i >= 0; i--) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i)
-    const key = d.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' })
+    const ms = Date.now() - i * 86400000
+    const key = new Date(ms).toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' })
     days.push({ date: key, minutes: map.get(key) ?? 0 })
   }
 
