@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, Session } from '../api'
+import { PageHeading } from '../components/PageHeading'
 
 const LIMIT = 200
 
@@ -30,9 +31,9 @@ export default function HistoryPage() {
 
   return (
     <div>
-      <div className="flex items-baseline gap-3 mb-4 border-b-2 border-washi-header pb-3">
+      <PageHeading>
         <h1 className="font-black text-washi-text uppercase tracking-tight text-xl">History</h1>
-      </div>
+      </PageHeading>
 
       {loading ? (
         <p className="text-washi-muted text-base">読み込み中...</p>
