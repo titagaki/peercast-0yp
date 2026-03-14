@@ -10,6 +10,18 @@ function formatUpTime(seconds: number): string {
   return `${h}:${String(m).padStart(2, '0')}`
 }
 
+function Footer() {
+  return (
+    <div className="mt-8 text-right font-mono text-xs text-washi-muted">
+      このYPはオープンソースです —{' '}
+      <a href="https://github.com/titagaki/peercast-0yp" target="_blank" rel="noopener noreferrer"
+        className="hover:text-washi-text underline underline-offset-2">
+        view source
+      </a>
+    </div>
+  )
+}
+
 export default function ChannelListPage() {
   const [channels, setChannels] = useState<Channel[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,12 +60,7 @@ export default function ChannelListPage() {
           過去の配信
         </Link>
       </div>
-      <div className="mt-8 text-right">
-        <a href="https://github.com/titagaki/peercast-0yp" target="_blank" rel="noopener noreferrer"
-          className="font-mono text-xs text-washi-muted hover:text-washi-text">
-          github.com/titagaki/peercast-0yp
-        </a>
-      </div>
+      <Footer />
     </div>
   )
 
@@ -122,12 +129,7 @@ export default function ChannelListPage() {
           過去の配信
         </Link>
       </div>
-      <div className="mt-8 text-right">
-        <a href="https://github.com/titagaki/peercast-0yp" target="_blank" rel="noopener noreferrer"
-          className="font-mono text-xs text-washi-muted hover:text-washi-text">
-          github.com/titagaki/peercast-0yp
-        </a>
-      </div>
+      <Footer />
     </div>
   )
 }
