@@ -48,6 +48,12 @@ export default function ChannelListPage() {
           過去の配信
         </Link>
       </div>
+      <div className="mt-8 text-right">
+        <a href="https://github.com/titagaki/peercast-0yp" target="_blank" rel="noopener noreferrer"
+          className="font-mono text-xs text-washi-muted hover:text-washi-text">
+          github.com/titagaki/peercast-0yp
+        </a>
+      </div>
     </div>
   )
 
