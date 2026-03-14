@@ -60,11 +60,6 @@ cp .env.example .env
 
 `.env` の `SITE_DOMAIN` に公開ドメインを設定すると、Caddy が Let's Encrypt で HTTPS 証明書を自動取得します。
 
-### PeerCast クライアントの設定
-
-PeerCast の設定画面で「Root Server」（ルートサーバ / YP アドレス）に
-このサーバのホスト名を設定してください。デフォルトポートは 7144 です。
-
 ## 開発
 
 ```bash
