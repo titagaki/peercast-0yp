@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { api, ActivityDay, TimelineRow } from '../api'
+import { api, ActivityDay, Channel, TimelineRow } from '../api'
 
 function todayYYYYMMDD(): string {
   const d = new Date()
@@ -114,10 +114,14 @@ export default function ChannelDetailPage() {
   const activityMap = new Map(activity.map(d => [d.date, d.minutes]))
   const [timeline, setTimeline] = useState<TimelineRow[]>([])
   const [loadingTimeline, setLoadingTimeline] = useState(false)
+  const [liveChannel, setLiveChannel] = useState<Channel | null>(null)
 
   useEffect(() => {
     if (!channelName) return
     api.activity(channelName).then(setActivity).catch(() => {})
+    api.channels().then(chs => {
+      setLiveChannel(chs.find(c => c.name === channelName) ?? null)
+    }).catch(() => {})
   }, [channelName])
 
   useEffect(() => {
@@ -142,6 +146,9 @@ export default function ChannelDetailPage() {
     <div className="space-y-8">
       <div className="border-b-2 border-washi-header pb-3">
         <h1 className="font-black text-washi-text text-xl tracking-tight">{channelName}</h1>
+        {liveChannel?.comment && (
+          <p className="mt-1 text-sm text-washi-text">{liveChannel.comment}</p>
+        )}
       </div>
 
       <section>
