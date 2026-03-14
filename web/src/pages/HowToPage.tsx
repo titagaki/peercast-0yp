@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api, SiteConfig } from '../api'
 
 function CodeBlock({ value, placeholder }: { value?: string; placeholder: string }) {
@@ -61,7 +62,7 @@ export default function HowToPage() {
           <ul className="list-disc list-inside space-y-1 text-washi-text text-sm">
             <li>著作権を侵害するコンテンツの配信はお控えください</li>
             <li>
-              掲載には<a href="/terms" className="underline hover:text-washi-accent">利用規約</a>への同意が必要です
+              掲載には<Link to="/terms" className="underline hover:text-washi-accent">利用規約</Link>への同意が必要です
             </li>
           </ul>
         </div>

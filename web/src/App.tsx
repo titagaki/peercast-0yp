@@ -44,7 +44,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <BrowserRouter basename="/yp">
+    <BrowserRouter basename="/yp/">
       <Routes>
         <Route path="/" element={<Layout><ChannelListPage /></Layout>} />
         <Route path="/history" element={<Layout><HistoryPage /></Layout>} />
