@@ -21,9 +21,29 @@ export default function HowToPage() {
       <section className="space-y-4">
         <h2 className="text-base font-bold text-washi-text">視聴方法</h2>
         <p>
-          PeerCast の YP（Yellow Page）対応クライアントのチャンネル一覧 URL に以下を登録してください。
+          チャンネルの視聴には PeerCast 対応ソフトウェアが必要です。
+          お使いのソフトウェアに以下の URL を YP として登録してください。
         </p>
-        <CodeBlock value={config?.ypIndexURL} placeholder="（未設定）" />
+        <table className="w-full border border-washi-border">
+          <thead>
+            <tr className="text-left border-b border-washi-header bg-washi-surface">
+              <th className="py-2 px-4 text-xs font-bold uppercase tracking-wider text-washi-muted">ソフトウェア</th>
+              <th className="py-2 px-4 text-xs font-bold uppercase tracking-wider text-washi-muted">登録 URL</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-washi-border text-washi-muted">
+            <tr>
+              <td className="py-2 px-4 text-sm">PeerCastStation</td>
+              <td className="py-2 px-4 font-mono text-sm break-all select-all">{config?.ypIndexURL || '（未設定）'}</td>
+            </tr>
+            <tr>
+              <td className="py-2 px-4 text-sm">PeCaRecorder / pcypLite</td>
+              <td className="py-2 px-4 font-mono text-sm break-all select-all">
+                {config?.ypIndexURL ? config.ypIndexURL.replace(/\/index\.txt$/, '/') : '（未設定）'}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </section>
 
       <section className="space-y-4">
