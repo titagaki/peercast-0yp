@@ -12,12 +12,21 @@ function formatUpTime(seconds: number): string {
 
 function Footer() {
   return (
-    <div className="mt-8 text-right font-mono text-xs text-washi-muted">
-      このYPはオープンソースです —{' '}
-      <a href="https://github.com/titagaki/peercast-0yp" target="_blank" rel="noopener noreferrer"
-        className="hover:text-washi-text underline underline-offset-2">
-        view source
-      </a>
+    <div className="mt-8 font-mono text-xs text-washi-muted flex justify-between">
+      <span>
+        運営者:{' '}
+        <a href="https://x.com/megane_wo_gurun" target="_blank" rel="noopener noreferrer"
+          className="hover:text-washi-text underline underline-offset-2">
+          @megane_wo_gurun
+        </a>
+      </span>
+      <span>
+        このYPはオープンソースです —{' '}
+        <a href="https://github.com/titagaki/peercast-0yp" target="_blank" rel="noopener noreferrer"
+          className="hover:text-washi-text underline underline-offset-2">
+          view source
+        </a>
+      </span>
     </div>
   )
 }
