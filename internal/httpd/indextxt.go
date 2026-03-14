@@ -18,11 +18,11 @@ func (s *Server) handleIndexTxt(w http.ResponseWriter, r *http.Request) {
 	for _, cs := range states {
 		writeIndexLine(w, cs)
 	}
-	for _, info := range s.infoLines {
-		writeInfoLine(w, info.Name, info.URL, info.Comment)
-	}
 	if s.ypName != "" {
 		writeStatusLine(w, s.ypName, s.ypURL, time.Since(s.startTime))
+	}
+	for _, info := range s.infoLines {
+		writeInfoLine(w, info.Name, info.URL, info.Comment)
 	}
 }
 
