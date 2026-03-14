@@ -65,7 +65,7 @@ internal/config/         — TOML config loader
 | HTTP API 仕様 | `docs/HTTP_API.md` |
 | DBスキーマ | `docs/database.md` |
 | PCP プロトコル仕様 | `docs/protocol/PCP_SPEC.md` |
-| YP 登録フロー詳細 | `docs/protocol/YP_CHANNEL_REGISTRATION.md` |
+| YP 登録フロー詳細 | `docs/protocol/yp_channel_registration.md` |
 | プレイヤー連携仕様（index.txt・URL導出） | `docs/protocol/player.md` |
 | ジャンルフォーマット | `docs/protocol/genre.md` |
 | チャンネル識別と統計の設計方針 | `docs/design/channel_identity.md` |

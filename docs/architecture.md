@@ -73,7 +73,7 @@ chi ベースの HTTP サーバ。
 | `GET /yp/api/channels/timeline` | MySQL | 特定日のスナップショット履歴 |
 | `GET /yp/*` | embed（SPA） | React フロントエンド（静的ファイル） |
 
-各エンドポイントの詳細は [HTTP_API.md](HTTP_API.md) を参照。詳細なプロトコル仕様は [protocol/YP_CHANNEL_REGISTRATION.md](protocol/YP_CHANNEL_REGISTRATION.md) を参照。
+各エンドポイントの詳細は [HTTP_API.md](HTTP_API.md) を参照。詳細なプロトコル仕様は [protocol/yp_channel_registration.md](protocol/yp_channel_registration.md) を参照。
 
 ---
 

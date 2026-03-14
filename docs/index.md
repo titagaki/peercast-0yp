@@ -15,7 +15,7 @@
 |---|---|
 | [protocol/player.md](protocol/player.md) | プレイヤーの YP 連携仕様（index.txt フォーマット・URL 導出） |
 | [protocol/genre.md](protocol/genre.md) | ジャンル文字列フォーマット（`yp` プレフィックス・非表示フラグ） |
-| [protocol/YP_CHANNEL_REGISTRATION.md](protocol/YP_CHANNEL_REGISTRATION.md) | YP 登録プロトコル詳細（PCP ハンドシェイク・bcst 構造） |
+| [protocol/yp_channel_registration.md](protocol/yp_channel_registration.md) | YP 登録プロトコル詳細（PCP ハンドシェイク・bcst 構造） |
 | [protocol/PCP_SPEC.md](protocol/PCP_SPEC.md) | PCP バイナリプロトコル仕様（atom フォーマット・タグ一覧） |
 
 ## 設計文書
