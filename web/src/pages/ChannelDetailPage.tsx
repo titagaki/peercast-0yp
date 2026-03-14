@@ -16,6 +16,12 @@ function fmtTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
 }
 
+function fmtUpTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
 export default function ChannelDetailPage() {
   const { name } = useParams<{ name: string }>()
   const channelName = decodeURIComponent(name ?? '')
@@ -54,10 +60,21 @@ export default function ChannelDetailPage() {
     <div className="space-y-8">
       <div className="border-b-2 border-washi-header pb-3">
         <h1 className="font-black text-washi-text text-xl tracking-tight">{channelName}</h1>
-        {liveChannel?.comment && (
-          <p className="mt-1 text-sm text-washi-text">{liveChannel.comment}</p>
-        )}
       </div>
+
+      {liveChannel && (
+        <div className="border border-washi-header bg-washi-surface px-4 py-3 space-y-1">
+          <p className="text-xs font-bold uppercase tracking-wider text-washi-header">現在配信中</p>
+          <p className="font-mono text-sm text-washi-text">
+            リスナー {liveChannel.numListeners} / リレー {liveChannel.numRelays}
+            {liveChannel.genre && <span className="ml-3">{liveChannel.genre}</span>}
+            {liveChannel.upTime > 0 && <span className="ml-3">UP {fmtUpTime(liveChannel.upTime)}</span>}
+          </p>
+          {liveChannel.comment && (
+            <p className="text-sm text-washi-text">{liveChannel.comment}</p>
+          )}
+        </div>
+      )}
 
       <section>
         <div className="border-b-2 border-washi-header pb-3 mb-4 space-y-3">
