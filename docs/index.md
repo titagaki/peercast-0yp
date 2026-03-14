@@ -24,4 +24,3 @@
 |---|---|
 | [design/httpd_architecture.md](design/httpd_architecture.md) | httpd 設計の意思決定記録 |
 | [design/e2e_test_plan.md](design/e2e_test_plan.md) | E2E テストケース一覧・実装状況 |
-| [design/references.md](design/references.md) | 参考資料（C++ リファレンス実装） |

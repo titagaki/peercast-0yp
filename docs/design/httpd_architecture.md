@@ -95,14 +95,14 @@ func (s *Store) Snapshot() []ChannelState
 ```
 main.go
   ├── channel.Store          ← 共有インメモリ状態（PCPで更新、APIで参照）
-  ├── pcp.Server          ← PCPルートサーバ (port 7145)
+  ├── pcp.Server          ← PCPルートサーバ (port 7144)
   │     └── channel.Store への AddHit / DelHit
   ├── archive.Recorder       ← Store の変化を観察し MySQL に記録
-  └── httpd.Server           ← HTTPサーバ (port 8080)
-        ├── GET /api/channels → channel.Store 参照 → JSON（機能1用API）
-        ├── GET /api/history  → MySQL 参照 → JSON（機能3用API）
-        ├── GET /index.txt    → channel.Store 参照 → index.txt（機能2）
-        └── GET /*            → React SPA の静的ファイル（機能1・3 UI）
+  └── httpd.Server           ← HTTPサーバ (port 80)
+        ├── GET /yp/api/channels → channel.Store 参照 → JSON（機能1用API）
+        ├── GET /yp/api/history  → MySQL 参照 → JSON（機能3用API）
+        ├── GET /yp/index.txt    → channel.Store 参照 → index.txt（機能2）
+        └── GET /yp/*            → React SPA の静的ファイル（機能1・3 UI）
 ```
 
 React SPA のビルド成果物は `//go:embed` でバイナリに埋め込み、単一バイナリで完結させる。
@@ -114,9 +114,9 @@ PeerCastクライアント          Webブラウザ（React SPA）
   │  PCP (TCP)                  │  HTTP
   ▼                             ▼
 pcp.Server             httpd.Server
-  │ AddHit / DelHit         ├── GET /api/channels → channel.Store（リアルタイム）
-  ▼                         ├── GET /api/history  → MySQL（履歴）
-channel.Store               └── GET /index.txt    → channel.Store（機能2）
+  │ AddHit / DelHit         ├── GET /yp/api/channels → channel.Store（リアルタイム）
+  ▼                         ├── GET /yp/api/history  → MySQL（履歴）
+channel.Store               └── GET /yp/index.txt    → channel.Store（機能2）
   │
   │ 変化通知（イベントまたはポーリング）
   ▼
@@ -146,7 +146,7 @@ MySQL
 
 | 項目 | 決定内容 |
 |---|---|
-| HTTPサーバのポート番号 | **8080** |
+| HTTPサーバのポート番号 | **80** |
 | `archive.Recorder` の実装方式 | **ポーリング差分**（1s間隔、Store変更なし） |
 | MySQLのスキーマ設計 | `design/schema.md` 参照 |
 | React SPA のビルド・配置方法 | `go:embed` でバイナリ埋め込み |

@@ -95,7 +95,7 @@ archive.Recorder               ├── /yp/api/history    → MySQL
   ▼                            └── /yp/*              → SPA (embed)
 MySQL
   ├── channel_sessions    ← セッション開始・終了時刻
-  └── channel_snapshots   ← 1分間隔リスナー数スナップショット
+  └── channel_snapshots   ← 10分間隔リスナー数スナップショット
 ```
 
 ---
@@ -126,7 +126,7 @@ Store
 | テーブル | 内容 |
 |---|---|
 | `channel_sessions` | 配信セッション（開始・終了時刻、基本メタデータ） |
-| `channel_snapshots` | 1分間隔スナップショット（リスナー数・全メタデータ） |
+| `channel_snapshots` | 10分間隔スナップショット（リスナー数・全メタデータ） |
 
 ---
 

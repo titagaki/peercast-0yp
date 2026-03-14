@@ -1,8 +1,10 @@
 # HTTP API 仕様
 
+すべてのエンドポイントは `/yp/` プレフィックス配下に置かれている。
+
 ## エンドポイント一覧
 
-### `GET /index.txt`
+### `GET /yp/index.txt`
 
 PeerCast プレイヤーが読み込むチャンネルリスト。YP4G 互換フォーマット。
 
@@ -11,7 +13,22 @@ PeerCast プレイヤーが読み込むチャンネルリスト。YP4G 互換フ
 
 ---
 
-### `GET /getgmt.php?cn={channel_name}`
+### `GET /yp/api/config`
+
+フロントエンド SPA が起動時に読み込むサーバ設定。
+
+**レスポンス（JSON）:**
+
+```json
+{
+  "ypIndexURL": "https://example.com/yp/index.txt",
+  "pcpAddress": "pcp://example.com/"
+}
+```
+
+---
+
+### `GET /yp/getgmt.php?cn={channel_name}`
 
 PeerCast プレイヤーが開く統計ページ URL。SPA が `/channels/{name}` にリダイレクトして処理する。
 
@@ -21,7 +38,7 @@ PeerCast プレイヤーが開く統計ページ URL。SPA が `/channels/{name}
 
 ---
 
-### `GET /chat.php?cn={channel_name}`
+### `GET /yp/chat.php?cn={channel_name}`
 
 PeerCast プレイヤーが開くチャットページ URL。SPA が「チャット機能を提供していません」ページを表示する。
 
@@ -31,7 +48,7 @@ PeerCast プレイヤーが開くチャットページ URL。SPA が「チャッ
 
 ---
 
-### `GET /api/channels`
+### `GET /yp/api/channels`
 
 現在放送中のチャンネル一覧をJSONで返す。
 
@@ -68,7 +85,7 @@ PeerCast プレイヤーが開くチャットページ URL。SPA が「チャッ
 
 ---
 
-### `GET /api/history?limit={n}&offset={n}`
+### `GET /yp/api/history?limit={n}&offset={n}`
 
 過去の配信セッション一覧。
 
@@ -100,7 +117,7 @@ PeerCast プレイヤーが開くチャットページ URL。SPA が「チャッ
 
 ---
 
-### `GET /api/channels/activity?name={channel_name}`
+### `GET /yp/api/channels/activity?name={channel_name}`
 
 指定チャンネルの過去365日間の日別放送時間。
 
@@ -121,7 +138,7 @@ PeerCast プレイヤーが開くチャットページ URL。SPA が「チャッ
 
 ---
 
-### `GET /api/channels/timeline?name={channel_name}&date={YYYYMMDD}`
+### `GET /yp/api/channels/timeline?name={channel_name}&date={YYYYMMDD}`
 
 指定チャンネルの特定日のスナップショット履歴（10分刻み）。
 

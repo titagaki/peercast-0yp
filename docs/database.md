@@ -52,14 +52,14 @@ CREATE TABLE channel_sessions (
 
 ## テーブル: `channel_snapshots`
 
-1分間隔でインメモリStoreの状態を記録したスナップショット。
+10分間隔でインメモリStoreの状態を記録したスナップショット。
 リスナー数推移グラフと日別タイムライン表示に使用する。
 
 ```sql
 CREATE TABLE channel_snapshots (
     id             BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
     session_id     BIGINT UNSIGNED   NOT NULL,  -- channel_sessions.id
-    channel_id     BINARY(16)        NOT NULL,  -- 履歴参照用
+    channel_id     CHAR(32)          NOT NULL DEFAULT '',  -- 履歴参照用（hex文字列）
     recorded_at    DATETIME          NOT NULL,
 
     -- リスナー数（全Hitのsum）
@@ -92,7 +92,7 @@ CREATE TABLE channel_snapshots (
 | カラム | 元フィールド | 説明 |
 |---|---|---|
 | `session_id` | — | 所属セッション（`channel_sessions.id`） |
-| `channel_id` | `Info.ID` | 配信時点の GnuID（履歴参照用） |
+| `channel_id` | `Info.ID` | 配信時点の GnuID（hex 文字列 32 文字、履歴参照用） |
 | `listeners` | `Hit.NumListeners` の合計 | 全Hitのリスナー数合計 |
 | `relays` | `Hit.NumRelays` の合計 | 全Hitのリレー数合計 |
 | `age` | tracker `Hit.UpTime` | 配信者が報告する配信経過秒数 |

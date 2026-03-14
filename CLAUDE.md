@@ -71,9 +71,3 @@ internal/config/         — TOML config loader
 | チャンネル識別と統計の設計方針 | `docs/design/channel_identity.md` |
 | 設計意思決定・参考資料 | `docs/design/` |
 
-## Reference Implementation
-
-`_ref/peercast-yt/` — C++ PeerCast (git submodule). Key files:
-- `core/common/pcp.h` — all PCP tag constants
-- `core/common/atom.h` / `atom2.h` — atom I/O primitives
-- `core/common/servent.h` — per-connection state machine
