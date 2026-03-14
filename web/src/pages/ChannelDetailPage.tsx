@@ -139,7 +139,7 @@ export default function ChannelDetailPage() {
 
   const rows = timeline.map(row => ({
     ...row,
-    detail: row.changed ? [row.genre, row.trackTitle || row.description].filter(Boolean).join(' / ') : '',
+    detail: row.changed ? [[row.genre, row.trackTitle || row.description].filter(Boolean).join(' - '), row.comment].filter(Boolean).join(' - ') : '',
   }))
 
   return (
