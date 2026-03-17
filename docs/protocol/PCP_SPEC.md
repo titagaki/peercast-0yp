@@ -182,7 +182,7 @@ After the above header atoms, nested atoms such as `chan`, `host`, `push`, or `m
 | `ip`   | INT or RAW[16]| Host IP address. 4 bytes = IPv4, 16 bytes = IPv6. Multiple `ip`+`port` pairs may appear to advertise multiple addresses. |
 | `port` | SHORT         | Port corresponding to the preceding `ip` atom. |
 | `numl` | INT           | Number of connected listeners. (**`numl`**, not `num`.) |
-| `numr` | INT           | Number of available relay slots. |
+| `numr` | INT           | Number of currently connected relay nodes. |
 | `uptm` | INT           | Uptime in seconds. |
 | `oldp` | INT           | Oldest available stream position (byte offset). |
 | `newp` | INT           | Newest stream position (byte offset). |

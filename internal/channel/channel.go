@@ -46,7 +46,7 @@ type Hit struct {
 	GlobalAddr   net.TCPAddr // PCP tags: ip+port pair [0] — public address
 	LocalAddr    net.TCPAddr // PCP tags: ip+port pair [1] — LAN address
 	NumListeners uint32      // PCP tag: numl
-	NumRelays    uint32      // PCP tag: numr
+	NumRelays    uint32      // PCP tag: numr — connected relay count
 	UpTime       uint32      // PCP tag: uptm (seconds)
 	Version      uint32      // PCP tag: ver
 	VersionVP    uint32      // PCP tag: vevp
