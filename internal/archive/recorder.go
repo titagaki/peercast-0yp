@@ -47,7 +47,7 @@ func (r *Recorder) Start(ctx context.Context) {
 		r.log.Error("archive: closeStaleSessions", "err", err)
 	}
 
-	r.lastSnap = time.Now()
+	r.lastSnap = time.Now().Truncate(10 * time.Minute)
 
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
