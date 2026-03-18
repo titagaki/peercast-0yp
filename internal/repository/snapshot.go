@@ -139,7 +139,6 @@ func (r *SnapshotRepo) ListByNameAndDate(ctx context.Context, name string, daySt
 			name != prevName.String ||
 			genre != prevGenre.String ||
 			desc != prevDesc.String ||
-			url != prevURL.String ||
 			comment != prevComment.String ||
 			trackTitle != prevTrackTitle.String ||
 			trackArtist != prevTrackArtist.String
@@ -220,7 +219,6 @@ func (r *SnapshotRepo) ListByNameAndDateForPage(ctx context.Context, name string
 			name != prevName.String ||
 			genre != prevGenre.String ||
 			desc != prevDesc.String ||
-			url != prevURL.String ||
 			comment != prevComment.String ||
 			trackTitle != prevTrackTitle.String ||
 			trackArtist != prevTrackArtist.String
