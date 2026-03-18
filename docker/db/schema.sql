@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS channel_sessions (
     description  VARCHAR(255)      NOT NULL DEFAULT '',
     comment      VARCHAR(255)      NOT NULL DEFAULT '',
     content_type VARCHAR(32)       NOT NULL DEFAULT '',
+    tracker_ip   VARCHAR(45)       NOT NULL DEFAULT '',  -- tracker hit の GlobalAddr.IP（IPv4/IPv6）
     started_at   DATETIME          NOT NULL,
     ended_at     DATETIME          NULL,        -- NULL = 配信中
 

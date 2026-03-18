@@ -21,6 +21,7 @@ CREATE TABLE channel_sessions (
     description  VARCHAR(255)     NOT NULL DEFAULT '',
     comment      VARCHAR(255)     NOT NULL DEFAULT '',
     content_type VARCHAR(32)      NOT NULL DEFAULT '',
+    tracker_ip   VARCHAR(45)      NOT NULL DEFAULT '',  -- tracker hit の GlobalAddr.IP（IPv4/IPv6）
     started_at   DATETIME         NOT NULL,
     ended_at     DATETIME         NULL,        -- NULL = 配信中
 
@@ -39,6 +40,7 @@ CREATE TABLE channel_sessions (
 | `description` | `Info.Desc` | 概要 |
 | `comment` | `Info.Comment` | コメント |
 | `content_type` | `Info.ContentType` | コンテンツタイプ（FLV, MKV等） |
+| `tracker_ip` | tracker `Hit.GlobalAddr.IP` | 配信者ノードのグローバルIP（IPv4 or IPv6）。セッション開始時に記録 |
 | `started_at` | — | Storeに初めて出現した時刻 |
 | `ended_at` | — | Storeから消えた時刻。配信中は NULL |
 

@@ -19,6 +19,7 @@ type Session struct {
 	Description string
 	URL         string
 	Comment     string
+	TrackerIP   string
 	StartedAt   time.Time
 	EndedAt     *time.Time
 	DurationMin int
@@ -47,18 +48,29 @@ func (r *SessionRepo) CloseStaleSessions(ctx context.Context) error {
 	return err
 }
 
+// trackerIP returns the GlobalAddr IP string of the tracker hit, or "" if none.
+func trackerIP(s channel.ChannelState) string {
+	for _, h := range s.Hits {
+		if h.Tracker {
+			return h.GlobalAddr.IP.String()
+		}
+	}
+	return ""
+}
+
 // Insert creates a new session row and returns its ID.
 func (r *SessionRepo) Insert(ctx context.Context, s channel.ChannelState, now time.Time) (int64, error) {
 	res, err := r.db.ExecContext(ctx, `
 		INSERT INTO channel_sessions
-			(channel_name, content_type, genre, description, url, comment, started_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			(channel_name, content_type, genre, description, url, comment, tracker_ip, started_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		s.Info.Name,
 		s.Info.ContentType,
 		stripYPPrefix(s.Info.Genre),
 		s.Info.Desc,
 		s.Info.URL,
 		s.Info.Comment,
+		trackerIP(s),
 		now,
 	)
 	if err != nil {
@@ -87,7 +99,7 @@ func (r *SessionRepo) Close(ctx context.Context, id int64, s channel.ChannelStat
 // ordered by started_at DESC.
 func (r *SessionRepo) List(ctx context.Context, limit, offset int) ([]Session, error) {
 	rows, err := r.db.QueryContext(ctx, `
-		SELECT id, channel_name, content_type, genre, description, url, comment,
+		SELECT id, channel_name, content_type, genre, description, url, comment, tracker_ip,
 		       started_at, ended_at,
 		       TIMESTAMPDIFF(MINUTE, started_at, IFNULL(ended_at, NOW())) AS duration_min
 		FROM channel_sessions
@@ -105,7 +117,7 @@ func (r *SessionRepo) List(ctx context.Context, limit, offset int) ([]Session, e
 		var endedAt sql.NullTime
 		if err := rows.Scan(
 			&s.ID, &s.ChannelName,
-			&s.ContentType, &s.Genre, &s.Description, &s.URL, &s.Comment,
+			&s.ContentType, &s.Genre, &s.Description, &s.URL, &s.Comment, &s.TrackerIP,
 			&s.StartedAt, &endedAt, &s.DurationMin,
 		); err != nil {
 			return nil, err
