@@ -13,6 +13,7 @@ services:
       - caddy_config:/config
     environment:
       SITE_DOMAIN: ${SITE_DOMAIN}
+      YP_PATH: ${YP_PATH:-/yp}
     depends_on:
       - app
     container_name: peercast-0yp-caddy

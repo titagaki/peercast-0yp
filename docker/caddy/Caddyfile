@@ -1,5 +1,5 @@
 http://{$SITE_DOMAIN} {
-    @indextxt path /index.txt
+    @indextxt path {$YP_PATH}/index.txt
     handle @indextxt {
         reverse_proxy app:80
     }
@@ -10,7 +10,7 @@ http://{$SITE_DOMAIN} {
 }
 
 {$SITE_DOMAIN} {
-    @yp path /yp /yp/*
+    @yp path {$YP_PATH} {$YP_PATH}/*
     handle @yp {
         reverse_proxy app:80
     }
