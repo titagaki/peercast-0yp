@@ -310,7 +310,8 @@ func (srv *Server) handleConn(ctx context.Context, conn net.Conn) {
 		case pcp.PCPBcst:
 			srv.processBcst(sess, atom)
 		case pcp.PCPQuit:
-			slog.Info("client quit", "addr", remoteAddr)
+			code, _ := atom.GetInt()
+			slog.Info("client quit", "addr", remoteAddr, "code", code)
 			return
 		}
 	}
