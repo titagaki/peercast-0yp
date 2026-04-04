@@ -217,14 +217,18 @@ func (srv *Server) handleConn(ctx context.Context, conn net.Conn) {
 		slog.Debug("expected helo", "got", heloAtom.Tag, "addr", remoteAddr)
 		return
 	}
-	clientAgent, clientSID, clientPort, clientPing, clientVer := parseHelo(heloAtom)
-	slog.Info("HELO", "addr", remoteAddr, "agent", clientAgent, "ver", clientVer)
+	helo, err := pcp.ParseHeloPacket(heloAtom)
+	if err != nil {
+		slog.Debug("bad helo", "addr", remoteAddr, "err", err)
+		return
+	}
+	slog.Info("HELO", "addr", remoteAddr, "agent", helo.Agent, "ver", helo.Version)
 
 	// If client sent ping (FW_UNKNOWN), test the port; otherwise use declared port.
-	confirmedPort := clientPort
-	if clientPing != 0 {
-		confirmedPort = checkPort(remoteIP, clientPing)
-		slog.Debug("ping check", "addr", remoteIP, "ping", clientPing, "result", confirmedPort)
+	confirmedPort := helo.Port
+	if helo.Ping != 0 {
+		confirmedPort = checkPort(remoteIP, helo.Ping)
+		slog.Debug("ping check", "addr", remoteIP, "ping", helo.Ping, "result", confirmedPort)
 	}
 
 	// ── Step 3: Send OLEH ────────────────────────────────────────────────
@@ -242,15 +246,15 @@ func (srv *Server) handleConn(ctx context.Context, conn net.Conn) {
 		_ = pcp.NewIntAtom(pcp.PCPQuit, code).Write(conn)
 	}
 
-	if clientVer < srv.cfg.MinClientVersion {
+	if helo.Version < srv.cfg.MinClientVersion {
 		sendQuit(pcp.PCPErrorQuit + pcp.PCPErrorBadAgent)
 		return
 	}
-	if clientSID.IsEmpty() {
+	if helo.SessionID.IsEmpty() {
 		sendQuit(pcp.PCPErrorQuit + pcp.PCPErrorNotIdentified)
 		return
 	}
-	if clientSID == srv.sessionID {
+	if helo.SessionID == srv.sessionID {
 		return // loopback — silently close
 	}
 
@@ -260,7 +264,7 @@ func (srv *Server) handleConn(ctx context.Context, conn net.Conn) {
 		sendQuit(pcp.PCPErrorQuit + pcp.PCPErrorUnavailable)
 		return
 	}
-	if _, dup := srv.sessions[clientSID]; dup {
+	if _, dup := srv.sessions[helo.SessionID]; dup {
 		srv.mu.Unlock()
 		sendQuit(pcp.PCPErrorQuit + pcp.PCPErrorAlreadyConnected)
 		return
@@ -268,22 +272,22 @@ func (srv *Server) handleConn(ctx context.Context, conn net.Conn) {
 	sess := &session{
 		conn:     conn,
 		remoteIP: remoteIP,
-		clientID: clientSID,
+		clientID: helo.SessionID,
 		sendCh:   make(chan *pcp.Atom, 16),
 		done:     make(chan struct{}),
 	}
-	srv.sessions[clientSID] = sess
+	srv.sessions[helo.SessionID] = sess
 	srv.mu.Unlock()
 
 	defer func() {
 		close(sess.done)
 		srv.mu.Lock()
-		delete(srv.sessions, clientSID)
+		delete(srv.sessions, helo.SessionID)
 		srv.mu.Unlock()
 		slog.Info("CIN disconnected", "addr", remoteAddr)
 	}()
 
-	slog.Info("CIN connected", "addr", remoteAddr, "agent", clientAgent, "ver", clientVer)
+	slog.Info("CIN connected", "addr", remoteAddr, "agent", helo.Agent, "ver", helo.Version)
 
 	// ── Step 6: Send ok(0) + root > upd ──────────────────────────────────
 	if err := pcp.NewIntAtom(pcp.PCPOK, 0).Write(conn); err != nil {
@@ -322,13 +326,14 @@ func (srv *Server) handleConn(ctx context.Context, conn net.Conn) {
 // ----------------------------------------------------------------------------
 
 func writeOleh(w io.Writer, serverSID pcp.GnuID, remoteIP net.IP, clientPort uint16) error {
-	return pcp.NewParentAtom(pcp.PCPOleh,
-		pcp.NewStringAtom(pcp.PCPHeloAgent, agentString),
-		pcp.NewIDAtom(pcp.PCPHeloSessionID, serverSID),
-		pcp.NewIntAtom(pcp.PCPHeloVersion, serverVersion),
-		pcp.NewBytesAtom(pcp.PCPHeloRemoteIP, encodeIP(remoteIP)),
-		pcp.NewShortAtom(pcp.PCPHeloPort, clientPort),
-	).Write(w)
+	rip, _ := pcp.IPv4ToUint32(remoteIP)
+	return (&pcp.HeloPacket{
+		Agent:     agentString,
+		SessionID: serverSID,
+		Version:   serverVersion,
+		RemoteIP:  rip,
+		Port:      clientPort,
+	}).BuildOlehAtom().Write(w)
 }
 
 func writeRootAtoms(w io.Writer, cfg Config, withUpd bool) error {
@@ -426,24 +431,6 @@ func (srv *Server) processBcst(sess *session, atom *pcp.Atom) {
 // Atom parsers
 // ----------------------------------------------------------------------------
 
-func parseHelo(a *pcp.Atom) (agent string, sid pcp.GnuID, port uint16, ping uint16, ver uint32) {
-	for _, child := range a.Children() {
-		switch child.Tag {
-		case pcp.PCPHeloAgent:
-			agent = child.GetString()
-		case pcp.PCPHeloSessionID:
-			sid, _ = child.GetID()
-		case pcp.PCPHeloPort:
-			port, _ = child.GetShort()
-		case pcp.PCPHeloPing:
-			ping, _ = child.GetShort()
-		case pcp.PCPHeloVersion:
-			ver, _ = child.GetInt()
-		}
-	}
-	return
-}
-
 // checkPort tries to TCP-connect to ip:port with a 1-second timeout.
 // Returns the port on success, 0 on failure.
 func checkPort(ip net.IP, port uint16) uint16 {
@@ -456,21 +443,3 @@ func checkPort(ip net.IP, port uint16) uint16 {
 	return port
 }
 
-// ----------------------------------------------------------------------------
-// IP address helpers
-// ----------------------------------------------------------------------------
-
-func encodeIP(ip net.IP) []byte {
-	if ip4 := ip.To4(); ip4 != nil {
-		b := make([]byte, 4)
-		for i, v := range ip4 {
-			b[3-i] = v
-		}
-		return b
-	}
-	b := make([]byte, 16)
-	for i, v := range ip.To16() {
-		b[15-i] = v
-	}
-	return b
-}

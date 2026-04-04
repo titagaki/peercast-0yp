@@ -134,15 +134,11 @@ func parseTrackAtom(a *pcp.Atom, t *Track) {
 }
 
 // decodeIP converts PCP wire-format bytes to a net.IP.
-// 4 bytes → IPv4. 16 bytes → IPv6 (reversed on the wire, per PCP spec §6.5).
+// 4 bytes → IPv4 (via pcp.DecodeIPv4). 16 bytes → IPv6 (reversed on the wire, per PCP spec §6.5).
 func decodeIP(data []byte) net.IP {
 	switch len(data) {
 	case 4:
-		ip := make(net.IP, 4)
-		for i, b := range data {
-			ip[3-i] = b
-		}
-		return ip
+		return pcp.DecodeIPv4(data)
 	case 16:
 		ip := make(net.IP, 16)
 		for i, b := range data {
