@@ -69,17 +69,17 @@ pcp_address  = "pcp://example.com/"
 | `DB_USER` | データベースユーザー名 |
 | `DB_PASSWORD` | データベースパスワード |
 | `DB_HOST` | データベースホスト名 |
-| `DB_PORT` | データベースポート（デフォルト: `3306`）。MariaDB の公開ポートにも使用される |
+| `DB_PORT` | データベースポート（デフォルト: `3306`）。開発ではホストへの公開ポート。本番ではホスト mysqld の接続ポート |
 | `DB_NAME` | データベース名 |
 
-Docker で動かす場合、`DB_HOST` はコンテナ名（`mariadb`）に `docker-compose.yml` 側で上書きされます。
+開発用 override は `DB_HOST=mariadb`、`DB_PORT=3306` に上書きします。本番用 override は `DB_HOST=host.docker.internal` に上書きします。VPS 全体の本番設定は `yayaue.me/compose.yaml` と同リポジトリの `.env` で管理します。
 
 ### ポート
 
 | 環境変数 | 説明 |
 |---|---|
 | `PCP_PORT` | ホスト側に公開する PCP ポート（デフォルト: `7144`） |
-| `HTTP_PORT` | ホスト側に公開する HTTP ポート（デフォルト: `80`）。Caddy が受け取る |
+| `HTTP_PORT` | ホスト側に公開する HTTP ポート（デフォルト: `80`）。開発用 Caddy が受け取る。本番は 80 固定 |
 
 ### HTTPS（Caddy）
 

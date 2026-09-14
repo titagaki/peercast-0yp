@@ -15,50 +15,51 @@ Go で実装されており、PCP（PeerCast Protocol）バイナリプロトコ
 
 ## クイックスタート
 
-```bash
-# 起動（開発: MariaDB コンテナを含む）
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+Compose の責務は次のとおりです。
 
-# 起動（本番: ホストの mysqld に接続）
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-
-# ログ確認
-docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f app
-
-# 再起動（設定変更後など）
-docker compose -f docker-compose.yml -f docker-compose.dev.yml restart app
-
-# 停止
-docker compose -f docker-compose.yml -f docker-compose.dev.yml down
-```
-
-PCP サーバが `:7144`、HTTP（Caddy）が `:80` で起動します。
-YP は `/yp/` 配下で配信されます（例: `http://example.com/yp/`）。
-
-### 設定
-
-`peercast-0yp.toml` を編集してください。Docker 起動時はホストの設定ファイルがコンテナにマウントされます。
-
-```toml
-[pcp]
-port = 7144
-
-[http]
-port = 80
-yp_name      = "0yp"
-yp_url       = "https://example.com/yp/"
-yp_index_url = "https://example.com/yp/index.txt"
-pcp_address  = "pcp://example.com/"
-```
-
-データベース接続情報やポート番号は `.env` ファイルで設定します。
+- `docker-compose.yml`: app のビルド、TOML マウント、PCP 公開。
+- `docker-compose.dev.yml`: 開発用 Caddy と MariaDB、app の DB 接続先。
+- `docker-compose.prod.yml`: app 単体からホスト mysqld へ接続する設定。Caddy は含みません。
+- VPS 本番全体: 別リポジトリ `yayaue.me/compose.yaml` が Caddy と app を起動します。本リポジトリの Compose と同時起動しないでください。
 
 ```bash
 cp .env.example .env
-# .env を編集して各値を設定してください
+# .env の DB 認証情報を編集。ローカル開発では SITE_DOMAIN=localhost に設定
+# peercast-0yp.toml の公開 URL も環境に合わせる
+
+docker compose -f docker-compose.yml -f docker-compose.dev.yml config -q
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f app
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```
 
-`.env` の `SITE_DOMAIN` に公開ドメインを設定すると、Caddy が Let's Encrypt で HTTPS 証明書を自動取得します。
+開発用 Caddy は HTTP_PORT（既定例: 80）、443/TCP・UDP、app は PCP_PORT（既定: 7144）を公開します。
+HTTP の `/yp/index.txt` は直接配信し、その他は HTTPS へ転送します。
+HTTPS の `/yp` と `/yp/*` は app、その他は `public/` を配信します。
+`localhost` の HTTPS は Caddy のローカル CA を信頼する必要があります。
+MariaDB は named volume に永続化します。`down -v` はデータも削除するため通常の停止には使いません。
+開発の `DB_PORT` はホスト公開ポートで、app は常に `mariadb:3306` へ接続します。
+
+### 本番
+
+`/srv/yayaue.me` と `/srv/peercast-0yp` に配置し、`yayaue.me/README.md` の移行・起動手順を使ってください。
+本番 DB 認証情報は `/srv/yayaue.me/.env` に設定します。
+本番の静的トップページと Caddy 設定も `yayaue.me` で管理します。このリポジトリの `public/` と Caddyfile は開発用です。
+
+ホスト DB に接続する app 単体を起動する場合だけ、次を使用できます（HTTP はホストに公開されません）。
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml config -q
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+### 設定
+
+アプリ内部の待受ポートは `.env` ではなく `peercast-0yp.toml` で設定します。
+既存 Compose は `[http] port = 80`、`[pcp] port = 7144` を前提にしています。
+公開 URL (`yp_url`, `yp_index_url`, `pcp_address`) も環境に合わせて設定してください。
+`YP_PATH` は Caddy の振り分け設定だけなので、現在のアプリ・フロントエンドに合わせて `/yp` を維持してください。
+TOML 変更後は `restart app`、環境変数変更後は `up -d app` で反映します。
 
 ## 開発
 

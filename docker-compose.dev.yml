@@ -1,7 +1,26 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT}:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./docker/caddy:/etc/caddy:ro
+      - ./public:/srv/www:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN}
+      YP_PATH: ${YP_PATH:-/yp}
+    depends_on:
+      - app
+
   app:
     environment:
       DB_HOST: mariadb
+      DB_PORT: 3306
     depends_on:
       mariadb:
         condition: service_healthy
@@ -27,7 +46,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    container_name: peercast-0yp-mariadb
 
 volumes:
+  caddy_data:
+  caddy_config:
   mariadb_data:
